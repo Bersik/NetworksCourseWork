@@ -3,10 +3,11 @@ package view;
 import files.FileWorks;
 import files.Network;
 import files.NetworkFileFilter;
-import javafx.stage.FileChooser;
 import network.*;
 import view.form.CreateNetworkDialog2;
 import view.form.MainWindow;
+import view.form.information.InformationFrame;
+import view.form.information.NodeInformation;
 
 import javax.swing.*;
 
@@ -39,6 +40,8 @@ public class Realization extends MainWindow {
     private LinkMouseListener linkMouseListener = new LinkMouseListener();
     //Ексземляр обробника натиснення клавіш миші в режим "Видалення"
     private RemoveElementListener removeElementListener = new RemoveElementListener();
+    //Ексземляр обробника подвійного натиснення кнопки не елементи
+    private DoubleClickImageListener doubleClickImageListener = new DoubleClickImageListener();
 
     //Вибраний вузол
     private Node selectedNode;
@@ -50,6 +53,9 @@ public class Realization extends MainWindow {
 
     //стан системи
     private State state;
+
+    //Інформаційне вікно
+    private InformationFrame informationFrame;
 
     public Realization() {
         setTitle("Курсовий проект: Комп'ютерні мережі powered by Кісільчук С. В. КВ-21");
@@ -124,11 +130,12 @@ public class Realization extends MainWindow {
 
     /**
      * Знайти вузол в заданій точці
-     * @param point точка
+     *
+     * @param point    точка
      * @param accuracy точність
      * @return знайдений вузол
      */
-    private Node intersectNode(Point point,int accuracy){
+    private Node intersectNode(Point point, int accuracy) {
         for (Node n : nodes) {
             if (n.intersect(point, accuracy))
                 return n;
@@ -138,20 +145,22 @@ public class Realization extends MainWindow {
 
     /**
      * Перевірка накладання точки на якийсь вузол
-     * @param point точка натиску
-       @param accuracy точність
+     *
+     * @param point    точка натиску
+     * @param accuracy точність
      * @return якщо накладається, повертає true
      */
-    private boolean intersectNodes(Point point,int accuracy) {
-        return Node.intersectNodes(nodes,point,accuracy);
+    private boolean intersectNodes(Point point, int accuracy) {
+        return Node.intersectNodes(nodes, point, accuracy);
     }
 
     /**
      * Перевірка накладання точки на якийсь канал
+     *
      * @param point точка
      * @return знайдений канал
      */
-    private Link intersectLink(Point point){
+    private Link intersectLink(Point point) {
         for (Link n : links)
             if (n.intersect(point))
                 return n;
@@ -160,15 +169,17 @@ public class Realization extends MainWindow {
 
     /**
      * Перевірка накладання точки на якийсь канал
+     *
      * @param point точка натиску
      * @return якщо накладається, повертає true
      */
     private boolean intersectLinks(Point point) {
-        return Link.intersectLinks(links,point);
+        return Link.intersectLinks(links, point);
     }
 
     /**
      * Вибрати вузол в точці p
+     *
      * @param point точка
      */
     private void selectNode(Point point) {
@@ -181,16 +192,17 @@ public class Realization extends MainWindow {
 
     /**
      * Вибрати вузол
+     *
      * @param node вузол
      */
-    private void selectNode(Node node) {
+    public void selectNode(Node node) {
         //якщо вибрали інший вузол, але вже був вибраний інший вузол
         unselectNodeAndLink();
         selectedNode = node;
 
         //вибрати довжину буферу
-        for(int i=0;i<Link.BUFFER_LENGTHS.length;i++)
-            if (Link.BUFFER_LENGTHS[i] == node.getBufferLength()){
+        for (int i = 0; i < Link.BUFFER_LENGTHS.length; i++)
+            if (Link.BUFFER_LENGTHS[i] == node.getBufferLength()) {
                 lengthComboBox.setSelectedIndex(i);
             }
 
@@ -198,12 +210,12 @@ public class Realization extends MainWindow {
         selectElementState();
     }
 
-    private void selectElementState(){
+    private void selectElementState() {
         Boolean value = null;
         boolean edit = true;
-        if (selectedNode!=null){
+        if (selectedNode != null) {
             value = selectedNode.isActive();
-        }else if (selectedLink != null) {
+        } else if (selectedLink != null) {
             value = selectedLink.isActive();
             //якщо один із вузлів каналу неактивний, то і канал не активний
             if (!selectedLink.getNode1().isActive() || !selectedLink.getNode2().isActive())
@@ -217,6 +229,7 @@ public class Realization extends MainWindow {
 
     /**
      * Вибрати канал в точці p
+     *
      * @param point точка
      */
     private void selectLink(Point point) {
@@ -229,6 +242,7 @@ public class Realization extends MainWindow {
 
     /**
      * Вибрати канал
+     *
      * @param link канал
      */
     private void selectLink(Link link) {
@@ -237,8 +251,8 @@ public class Realization extends MainWindow {
         selectedLink = link;
         image1.drawSelectedLink(link);
 
-        if (state == State.CHANNEL){
-            switch (link.getLinkType()){
+        if (state == State.CHANNEL) {
+            switch (link.getLinkType()) {
                 case DUPLEX:
                     buttonDuplex.setSelected(true);
                     break;
@@ -246,7 +260,7 @@ public class Realization extends MainWindow {
                     buttonHalfDuplex.setSelected(true);
                     break;
             }
-            switch (link.getConnectionType()){
+            switch (link.getConnectionType()) {
                 case SATELLITE:
                     satelliteRadioButton.setSelected(true);
                     break;
@@ -254,27 +268,28 @@ public class Realization extends MainWindow {
                     groundRadioButton.setSelected(true);
                     break;
             }
-            for(int i=0;i<Link.WEIGHTS.length;i++)
-                if (Link.WEIGHTS[i] == link.getWeight()){
+            for (int i = 0; i < Link.WEIGHTS.length; i++)
+                if (Link.WEIGHTS[i] == link.getWeight()) {
                     comboBoxWeight.setSelectedIndex(i);
-            }
+                }
         }
         selectElementState();
     }
 
     /**
      * Чи вибраний якийсь елемент
+     *
      * @return true, false
      */
-    private boolean isSelectedItem(){
+    private boolean isSelectedItem() {
         return isSelectedLink() || isSelectedNode();
     }
 
-    private boolean isSelectedNode(){
+    private boolean isSelectedNode() {
         return selectedNode != null;
     }
 
-    private boolean isSelectedLink(){
+    private boolean isSelectedLink() {
         return selectedLink != null;
     }
 
@@ -289,7 +304,7 @@ public class Realization extends MainWindow {
         }
     }
 
-    private void unselectElement(){
+    private void unselectElement() {
         activeCheckBox.setEnabled(false);
     }
 
@@ -319,9 +334,10 @@ public class Realization extends MainWindow {
     /**
      * Визначає довжину буфера вузла:
      * якщо {@code autoLengthCheckBox} вибраний, поверне рандомне значення із заданих за умовою
+     *
      * @return довжина буферу
      */
-    private int getLengthOfBuffer(){
+    private int getLengthOfBuffer() {
         if (autoLengthCheckBox.isSelected()) {
             Random random = new Random();
             return Link.BUFFER_LENGTHS[random.nextInt(Link.BUFFER_LENGTHS.length)];
@@ -331,13 +347,14 @@ public class Realization extends MainWindow {
 
     /**
      * Додати новий вузол
+     *
      * @param p точка знаходженн вузла на полотні
      * @return створений вузол
      */
     private Node addNode(Point p) {
         //TODO
 
-        Node node = new Node(p,getLengthOfBuffer());
+        Node node = new Node(p, getLengthOfBuffer());
         nodes.add(node);
         image1.drawNode(node);
         return node;
@@ -345,11 +362,12 @@ public class Realization extends MainWindow {
 
     /**
      * Видаляє заданий вузол
+     *
      * @param node вузол
      */
-    private void removeNode(Node node){
-        for(int i=0;i<links.size();i++){
-            if ((links.get(i).getNode1() == node) || (links.get(i).getNode2() == node)){
+    private void removeNode(Node node) {
+        for (int i = 0; i < links.size(); i++) {
+            if ((links.get(i).getNode1() == node) || (links.get(i).getNode2() == node)) {
                 links.remove(i);
                 i--;
             }
@@ -360,9 +378,10 @@ public class Realization extends MainWindow {
 
     /**
      * Видаляє заданий канал
+     *
      * @param link вузол
      */
-    private void removeLink(Link link){
+    private void removeLink(Link link) {
         links.remove(link);
         redrawAll();
     }
@@ -370,7 +389,7 @@ public class Realization extends MainWindow {
     /**
      * Перемалювати все
      */
-    private void redrawAll() {
+    public void redrawAll() {
         image1.clear();
         image1.drawLinks(links);
         image1.drawNodes(nodes);
@@ -382,11 +401,12 @@ public class Realization extends MainWindow {
 
     /**
      * Змінити стан системи
+     *
      * @param state вказаний стан
      */
-    private void changeState(State state){
+    private void changeState(State state) {
         //Очистити всі оброблювачі подій з image
-        for (MouseListener mouseListener:image1.getMouseListeners()) {
+        for (MouseListener mouseListener : image1.getMouseListeners()) {
             image1.removeMouseListener(mouseListener);
         }
 
@@ -403,7 +423,9 @@ public class Realization extends MainWindow {
         removeButton.setSelected(false);
         communicationParameters.setVisible(false);
         nodeParameters.setVisible(false);
-        switch (state){
+
+        image1.addMouseListener(doubleClickImageListener);
+        switch (state) {
             case CURSOR:
                 image1.addMouseListener(basicMouseListener);
                 cursorButton.setSelected(true);
@@ -427,6 +449,7 @@ public class Realization extends MainWindow {
 
     /**
      * Перевірка співпадіння каналу між заданими вузлами
+     *
      * @param link канал
      * @param node кінцевий вузол
      * @return при співпадінні true
@@ -437,9 +460,10 @@ public class Realization extends MainWindow {
 
     /**
      * Визначає вагу каналу: якщо {@code autoWeightCheckBox} вибраний, поверне рандомне значення із заданих за умовою
+     *
      * @return вагу каналу
      */
-    private int getWeight(){
+    private int getWeight() {
         if (autoWeightCheckBox.isSelected()) {
             Random random = new Random();
             return Link.WEIGHTS[random.nextInt(Link.WEIGHTS.length)];
@@ -461,6 +485,7 @@ public class Realization extends MainWindow {
 
     /**
      * Duplex vs Half-duplex
+     *
      * @return тип мережі
      */
     private LinkType getLinkType() {
@@ -475,7 +500,7 @@ public class Realization extends MainWindow {
         return ConnectionType.GROUND;
     }
 
-       /**
+    /**
      * Все очищає
      */
     private void clearAll() {
@@ -494,7 +519,7 @@ public class Realization extends MainWindow {
     /**
      * Обробка натиску кнопки "Курсор"
      */
-    class CursorButtonListener implements ActionListener{
+    class CursorButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             changeState(State.CURSOR);
@@ -504,7 +529,7 @@ public class Realization extends MainWindow {
     /**
      * Обробка натиску кнопки "Видалити"
      */
-    class RemoveButtonListener implements ActionListener{
+    class RemoveButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             changeState(State.REMOVE);
@@ -567,7 +592,7 @@ public class Realization extends MainWindow {
                 //якщо немає накладання на канали
                 if (!intersectLinks(p)) {
                     //якщо немає накладання на інші вузли
-                    if (!intersectNodes(p,RADIUS_INTERSECT)) {
+                    if (!intersectNodes(p, RADIUS_INTERSECT)) {
                         //Знімаємо вибір вузла
                         unselectNode();
                         //Додаємо і вибираємо створену точку
@@ -602,10 +627,10 @@ public class Realization extends MainWindow {
                 //знімаємо вибір вершини і вузла
                 unselectNodeAndLink();
                 //Якщо є накладання на якийсь вузол, починаємо звідти наш канал
-                if (intersectNodes(p,RADIUS_ACCURACY)){
+                if (intersectNodes(p, RADIUS_ACCURACY)) {
                     selectNode(p);
                     image1.drawNodeLink1(selectedNode);
-                }else if (intersectLinks(p)){
+                } else if (intersectLinks(p)) {
                     //Якщо попали на вузол
                     selectLink(p);
                 }
@@ -614,6 +639,7 @@ public class Realization extends MainWindow {
 
         /**
          * При відтисненні
+         *
          * @param e подія
          */
         @Override
@@ -623,21 +649,21 @@ public class Realization extends MainWindow {
                 Point p = e.getPoint();
 
                 //якщо один вузол вже вибраний і кінцева точка співпала з іншим вузлом
-                if (isSelectedNode() && intersectNodes(p,RADIUS_ACCURACY)){
+                if (isSelectedNode() && intersectNodes(p, RADIUS_ACCURACY)) {
                     Node node1 = selectedNode;
-                    Node node2 = intersectNode(p,RADIUS_ACCURACY);
+                    Node node2 = intersectNode(p, RADIUS_ACCURACY);
                     if (node1 == node2 || node2 == null)
                         return;
                     image1.drawNodeLink2(node2);
 
-                    for(Link link:node1.getLinks())
-                        if (isIncluded(link,node2)) {
+                    for (Link link : node1.getLinks())
+                        if (isIncluded(link, node2)) {
                             //TODO вибрати цей зв'язок
                             return;
                         }
 
                     //якщо немає співпадінь, то додаємо даний канал
-                    Link link = createNewLink(node1,node2);
+                    Link link = createNewLink(node1, node2);
                     links.add(link);
                     node1.addLink(link);
                     node2.addLink(link);
@@ -678,13 +704,13 @@ public class Realization extends MainWindow {
                 Point p = e.getPoint();
 
                 //якщо вибрали канал
-                if (intersectNodes(p,CIRCLE_RADIUS)) {
+                if (intersectNodes(p, CIRCLE_RADIUS)) {
                     //якщо попали на вузол
                     //вибираємо новий
                     selectNode(p);
-                }else if (intersectLinks(p) && (state == State.CURSOR)) {
+                } else if (intersectLinks(p) && (state == State.CURSOR)) {
                     selectLink(p);
-                } else{
+                } else {
                     //якщо нікуди не попали
                     unselectNodeAndLink();
                 }
@@ -693,6 +719,7 @@ public class Realization extends MainWindow {
 
         /**
          * При відтисненні (перетягування вузла)
+         *
          * @param e інформація про подію
          */
         @Override
@@ -700,8 +727,8 @@ public class Realization extends MainWindow {
             Point p = e.getPoint();
             //Якщо натиснута ліва клавіша миші
             if (e.getButton() == MouseEvent.BUTTON1) {
-                if (isSelectedNode() && !selectedNode.intersect(p,RADIUS_ACCURACY) &&
-                        !intersectNodes(p,RADIUS_INTERSECT) /*&& !intersectLinks(p)*/){
+                if (isSelectedNode() && !selectedNode.intersect(p, RADIUS_ACCURACY) &&
+                        !intersectNodes(p, RADIUS_INTERSECT) /*&& !intersectLinks(p)*/) {
                     selectedNode.setPosition(p);
                     redrawAll();
                     selectNode(selectedNode);
@@ -723,7 +750,7 @@ public class Realization extends MainWindow {
                 Point p = e.getPoint();
 
                 //якщо вибрали канал
-                Node node = intersectNode(p,CIRCLE_RADIUS);
+                Node node = intersectNode(p, CIRCLE_RADIUS);
                 if (node != null) {
                     removeNode(node);
                     return;
@@ -739,6 +766,30 @@ public class Realization extends MainWindow {
         }
     }
 
+    private class DoubleClickImageListener extends MouseAdapter{
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if ((e.getButton() == MouseEvent.BUTTON1)&& (e.getClickCount() == 2)){
+                Point p = e.getPoint();
+
+                if (informationFrame != null)
+                    informationFrame.dispose();
+                //Якщо це вузол
+                Node node = intersectNode(p,RADIUS_ACCURACY);
+                if (node != null){
+                        informationFrame = new NodeInformation(Realization.this, node);
+                        informationFrame.loadForm();
+                }else{
+                    //якщо це канал
+                    Link link = intersectLink(p);
+                    if (link != null){
+
+                    }
+                }
+            }
+        }
+    }
 
     //Інші оброблювачі подій
 
@@ -791,7 +842,7 @@ public class Realization extends MainWindow {
     private class SelectWeightActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (selectedLink != null){
+            if (selectedLink != null) {
                 selectedLink.setWeight(comboBoxWeight.getItemAt(comboBoxWeight.getSelectedIndex()));
                 redrawAll();
             }
@@ -804,7 +855,7 @@ public class Realization extends MainWindow {
     private class CommunicationMethodListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (selectedLink != null){
+            if (selectedLink != null) {
                 selectedLink.setConnectionType(getConnectionType());
                 redrawAll();
             }
@@ -817,7 +868,7 @@ public class Realization extends MainWindow {
     private class LinkMethodListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (selectedLink != null){
+            if (selectedLink != null) {
                 selectedLink.setLinkType(getLinkType());
                 redrawAll();
             }
@@ -830,12 +881,9 @@ public class Realization extends MainWindow {
     private class CreateNetworkButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            CreateNetworkDialog2 dialog = new CreateNetworkDialog2(Realization.this);
-            dialog.launch();
-            GeneratorNetwork generatorNetwork = dialog.getGeneratorNetwork();
-            if (generatorNetwork !=null){
+            GeneratorNetwork generatorNetwork = CreateNetworkDialog2.showDialog(Realization.this);;
+            if (generatorNetwork != null) {
                 clearAll();
-                Node.reset();
                 links = generatorNetwork.getLinks();
                 nodes = generatorNetwork.getNodes();
                 redrawAll();
@@ -850,22 +898,15 @@ public class Realization extends MainWindow {
     private class ActiveElementCheckBox implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (activeCheckBox.isSelected()){
+            if (activeCheckBox.isSelected()) {
                 if (selectedNode != null) {
                     selectedNode.activate();
-                    for(Link link:selectedNode.getLinks()){
-                        link.activate();
-                    }
-                }
-                else if (selectedLink != null)
+                } else if (selectedLink != null)
                     selectedLink.activate();
-            }else{
+            } else {
                 if (selectedNode != null) {
                     selectedNode.deActivate();
-                    //якщо деактивуємо вузол, то також деактивуємо канали, які з'єднані з цим вузлом
-                    selectedNode.getLinks().forEach(Link::deActivate);
-                }
-                else if (selectedLink != null )
+                } else if (selectedLink != null)
                     selectedLink.deActivate();
             }
             redrawAll();
@@ -879,10 +920,10 @@ public class Realization extends MainWindow {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
                 try {
-                    FileWorks.writeToFile(file,new Network(links,nodes));
+                    FileWorks.writeToFile(file, new Network(links, nodes));
                 } catch (IOException e1) {
                     JOptionPane.showMessageDialog(Realization.this,
-                            "Не вдалося зберегти файл.","Помилка",JOptionPane.ERROR_MESSAGE);
+                            "Не вдалося зберегти файл.", "Помилка", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -903,9 +944,10 @@ public class Realization extends MainWindow {
                     redrawAll();
                 } catch (IOException | ClassNotFoundException e1) {
                     JOptionPane.showMessageDialog(Realization.this,
-                            "Не вдалося завантажити мережу з файлу.","Помилка",JOptionPane.ERROR_MESSAGE);
+                            "Не вдалося завантажити мережу з файлу.", "Помилка", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
     }
+
 }

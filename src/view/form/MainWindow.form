@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="1077" height="604"/>
+      <xy x="20" y="20" width="1077" height="784"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -26,14 +26,6 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="17298" class="javax.swing.JButton" binding="clearButton">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Очистити"/>
-            </properties>
-          </component>
           <vspacer id="48a8d">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
@@ -50,13 +42,13 @@
             </border>
             <children>
               <grid id="82806" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+                <margin top="0" left="5" bottom="0" right="5"/>
                 <constraints>
                   <tabbedpane title="Топологія"/>
                 </constraints>
                 <properties>
                   <verifyInputWhenFocusTarget value="true"/>
-                  <visible value="true"/>
+                  <visible value="false"/>
                 </properties>
                 <border type="none"/>
                 <children>
@@ -288,7 +280,140 @@
                 </constraints>
                 <properties/>
                 <border type="none"/>
-                <children/>
+                <children>
+                  <grid id="dd769" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="3" bottom="0" right="3"/>
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="8062d" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="etched" title="Тип маршрутизації"/>
+                        <children>
+                          <component id="f333a" class="javax.swing.JRadioButton" binding="мінімальнаКількістьТранзитнихВузлівRadioButton" default-binding="true">
+                            <constraints>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="Мінімальна кількість транзитних вузлів"/>
+                            </properties>
+                          </component>
+                          <component id="6deee" class="javax.swing.JRadioButton" binding="мінімальнийШляхRadioButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <selected value="true"/>
+                              <text value="Мінімальний шлях"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <vspacer id="b5d3d">
+                        <constraints>
+                          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                      </vspacer>
+                      <grid id="331ae" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="etched" title="Генерація випадкового трафіку"/>
+                        <children>
+                          <component id="17a69" class="javax.swing.JCheckBox" binding="генераціяCheckBox" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="Генерація"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="918c8" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="3" bottom="0" right="5"/>
+                        <constraints>
+                          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="9678" class="javax.swing.JSlider" binding="slider1" default-binding="true">
+                            <constraints>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="1" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <inverted value="false"/>
+                              <majorTickSpacing value="1"/>
+                              <maximum value="10"/>
+                              <minimum value="1"/>
+                              <paintLabels value="true"/>
+                              <paintTicks value="true"/>
+                              <snapToTicks value="true"/>
+                              <value value="1"/>
+                              <valueIsAdjusting value="true"/>
+                            </properties>
+                            <clientProperties>
+                              <JSlider.isFilled class="java.lang.Boolean" value="true"/>
+                              <Slider.paintThumbArrowShape class="java.lang.Boolean" value="false"/>
+                            </clientProperties>
+                          </component>
+                          <component id="d6cf9" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="Швидкість"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="598b8" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="true" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="10" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="25523" class="javax.swing.JButton" binding="увімкнутиButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="Увімкнути"/>
+                            </properties>
+                          </component>
+                          <component id="aa73" class="javax.swing.JButton" binding="паузаButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="Пауза"/>
+                            </properties>
+                          </component>
+                          <component id="6e702" class="javax.swing.JButton" binding="крокButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="Крок"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                    </children>
+                  </grid>
+                </children>
               </grid>
             </children>
           </tabbedpane>
@@ -326,8 +451,32 @@
               </component>
             </children>
           </grid>
+          <grid id="baa61" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="5" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="17298" class="javax.swing.JButton" binding="clearButton">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Очистити"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
         </children>
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="buttonGroup1">
+      <member id="6deee"/>
+      <member id="f333a"/>
+    </group>
+  </buttonGroups>
 </form>

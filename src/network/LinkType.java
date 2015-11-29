@@ -5,7 +5,16 @@ package network;
  *
  * @author Bersik
  */
-
 public enum LinkType {
-    DUPLEX,HALF_DUPLEX
+    DUPLEX("Дуплекс"), HALF_DUPLEX("Напів-дуплекс");
+
+    private String str;
+    LinkType(String s){
+        str =s;
+    }
+
+    @Override
+    public String toString() {
+        return str;
+    }
 }

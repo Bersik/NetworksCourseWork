@@ -8,9 +8,9 @@ import java.io.File;
  *
  * @author Bersik
  */
-
-public class NetworkFileFilter extends FileFilter{
+public class NetworkFileFilter extends FileFilter {
     public static final String ntwFile = "ntw";
+
     @Override
     public boolean accept(File f) {
         if (f.isDirectory())
@@ -33,8 +33,8 @@ public class NetworkFileFilter extends FileFilter{
         String s = f.getName();
         int i = s.lastIndexOf('.');
 
-        if (i > 0 &&  i < s.length() - 1) {
-            ext = s.substring(i+1).toLowerCase();
+        if (i > 0 && i < s.length() - 1) {
+            ext = s.substring(i + 1).toLowerCase();
         }
         return ext;
     }

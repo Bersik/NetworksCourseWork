@@ -11,12 +11,11 @@ import java.util.ArrayList;
  *
  * @author Bersik
  */
-
 public class Link implements Serializable {
     public static final int[] WEIGHTS = {1, 2, 4, 5, 6, 7, 8, 10, 15, 21, 25, 30};
     public static final int[] BUFFER_LENGTHS = {10, 15, 21, 25, 30};
 
-    private Node node1,node2;
+    private Node node1, node2;
 
     private int weight;
     private LinkType linkType;
@@ -24,7 +23,7 @@ public class Link implements Serializable {
 
     private boolean active;
 
-    public Link(Node node1,Node node2,int weight,LinkType linkType, ConnectionType connectionType){
+    public Link(Node node1, Node node2, int weight, LinkType linkType, ConnectionType connectionType) {
         this.node1 = node1;
         this.node2 = node2;
         this.weight = weight;
@@ -37,15 +36,15 @@ public class Link implements Serializable {
         int radius = Settings.RADIUS_INTERSECT / 2;
         int step = radius / 2;
 
-        int length = (int)(Math.sqrt(Math.pow(node1.getPosition().x - node2.getPosition().x, 2) +
+        int length = (int) (Math.sqrt(Math.pow(node1.getPosition().x - node2.getPosition().x, 2) +
                 Math.pow(node1.getPosition().y - node2.getPosition().y, 2)));
         int count = length / step + 1;
-        double xstep = (double)(node1.getPosition().x - node2.getPosition().x) / (double)count;
-        double ystep = (double)(node1.getPosition().y - node2.getPosition().y) / (double)count;
+        double xstep = (double) (node1.getPosition().x - node2.getPosition().x) / (double) count;
+        double ystep = (double) (node1.getPosition().y - node2.getPosition().y) / (double) count;
 
         for (int i = 0; i < count; i++)
             if ((Math.pow(point.x - node1.getPosition().x + i * xstep, 2) +
-                    Math.pow(point.y - node1.getPosition().y + i * ystep, 2)) < Math.pow(radius,2)){
+                    Math.pow(point.y - node1.getPosition().y + i * ystep, 2)) < Math.pow(radius, 2)) {
                 return true;
             }
 
@@ -95,10 +94,11 @@ public class Link implements Serializable {
 
     /**
      * Перевірка накладання точки на якийсь канал
+     *
      * @param point точка натиску
      * @return якщо накладається, повертає true
      */
-    public static boolean intersectLinks(ArrayList<Link>links, Point point) {
+    public static boolean intersectLinks(ArrayList<Link> links, Point point) {
         //TODO Перевірити потім
         for (Link n : links)
             if (n.intersect(point))
@@ -109,4 +109,5 @@ public class Link implements Serializable {
     public boolean isActive() {
         return active;
     }
+
 }

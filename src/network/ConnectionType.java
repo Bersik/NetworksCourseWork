@@ -5,7 +5,16 @@ package network;
  *
  * @author Bersik
  */
-
 public enum ConnectionType {
-    GROUND, SATELLITE
+    GROUND("Наземний"), SATELLITE("Супутниковий");
+
+    private String str;
+    ConnectionType(String s){
+        this.str = s;
+    }
+
+    @Override
+    public String toString() {
+        return str;
+    }
 }

@@ -7,7 +7,6 @@ import java.awt.*;
  *
  * @author Bersik
  */
-
 public class Settings {
     public static final int RADIUS_INTERSECT = 30;
     public static final int CIRCLE_RADIUS = 12;

@@ -9,17 +9,17 @@ import java.io.*;
  * @author Bersik
  */
 public class FileWorks {
-
     /**
      * Записати в файл
-     * @param file файл
+     *
+     * @param file    файл
      * @param network мережа
      * @throws IOException
      */
     public static void writeToFile(File file, Network network) throws IOException {
         String ext = NetworkFileFilter.getExtension(file);
 
-        if ((ext == null) || (!ext.equals(NetworkFileFilter.ntwFile))){
+        if ((ext == null) || (!ext.equals(NetworkFileFilter.ntwFile))) {
             file = new File(file.getAbsolutePath() + "." + NetworkFileFilter.ntwFile);
         }
         FileOutputStream fos = new FileOutputStream(file);
@@ -32,6 +32,7 @@ public class FileWorks {
     /**
      * /**
      * Зчитати з файлу
+     *
      * @param file файл
      * @return мережа
      * @throws IOException
@@ -40,6 +41,6 @@ public class FileWorks {
     public static Network loadOfFile(File file) throws IOException, ClassNotFoundException {
         FileInputStream fis = new FileInputStream(file);
         ObjectInputStream oin = new ObjectInputStream(fis);
-        return (Network)oin.readObject();
+        return (Network) oin.readObject();
     }
 }

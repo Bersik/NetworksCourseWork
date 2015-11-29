@@ -12,7 +12,7 @@ import java.awt.event.*;
  *
  * @author Bersik
  */
-public class MainWindow extends JFrame{
+public class MainWindow extends JFrame {
     protected JPanel mainPanel;
     protected JButton clearButton;
     protected JToggleButton nodeButton;
@@ -42,8 +42,15 @@ public class MainWindow extends JFrame{
     protected JCheckBox autoLengthCheckBox;
     protected JPanel nodeParameters;
     protected JLabel labelLength;
+    protected JSlider slider1;
+    protected JRadioButton мінімальнаКількістьТранзитнихВузлівRadioButton;
+    protected JRadioButton мінімальнийШляхRadioButton;
+    protected JCheckBox генераціяCheckBox;
+    protected JButton увімкнутиButton;
+    protected JButton паузаButton;
+    protected JButton крокButton;
 
-    protected void groupRadioButtons(){
+    protected void groupRadioButtons() {
         communicationMethod.add(buttonDuplex);
         communicationMethod.add(buttonHalfDuplex);
         buttonDuplex.setSelected(true);
@@ -55,7 +62,7 @@ public class MainWindow extends JFrame{
         comboBoxWeight.setEnabled(false);
     }
 
-    public MainWindow(){
+    public MainWindow() {
         setContentPane(mainPanel);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -69,7 +76,7 @@ public class MainWindow extends JFrame{
     }
 
     private void createUIComponents() {
-        image1 = new view.Image(700,600);
+        image1 = new view.Image(700, 600);
     }
 
 }
