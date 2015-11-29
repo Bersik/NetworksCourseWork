@@ -14,6 +14,7 @@ import java.util.ArrayList;
 
 public class Link implements Serializable {
     public static final int[] WEIGHTS = {1, 2, 4, 5, 6, 7, 8, 10, 15, 21, 25, 30};
+    public static final int[] BUFFER_LENGTHS = {10, 15, 21, 25, 30};
 
     private Node node1,node2;
 

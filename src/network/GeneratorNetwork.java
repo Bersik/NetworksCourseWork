@@ -17,6 +17,7 @@ public class GeneratorNetwork {
     private ArrayList<Node> nodes;
     private ArrayList<Link> links;
     private int[] weights;
+    private int[] bufferLengths;
     private Random random;
     private int degreeNetworkValue;
 
@@ -31,35 +32,24 @@ public class GeneratorNetwork {
      * @param degreeNetworkValue ступінь мережі
      */
     public GeneratorNetwork(Dimension dimension, int countCommutationNodesValue,
-                            int countSatelliteLinksValue, int degreeNetworkValue,int[] weights) {
+                            int countSatelliteLinksValue, int degreeNetworkValue,int[] weights, int[] bufferLengths) {
         nodes = new ArrayList<>();
         links = new ArrayList<>();
         random =  new Random();
         this.weights = weights;
         this.degreeNetworkValue = degreeNetworkValue;
         this.dimension = dimension;
+        this.bufferLengths = bufferLengths;
 
         generateNodes(countCommutationNodesValue);
 
         generateLink(countSatelliteLinksValue);
     }
 
-    /*
-    final int OFFSET = CIRCLE_RADIUS*2;
-        final int MIDDLE_OFFSET_X = 200;
-        final int MIDDLE_OFFSET_Y = 80;
-
-        int x = OFFSET  + random.nextInt((int)dimension.getWidth() / 2 - MIDDLE_OFFSET_X);
-        if (random.nextDouble() <0.5)
-            x = (int)dimension.getWidth() - x;
-
-        int y = OFFSET  + random.nextInt((int)dimension.getHeight() / 2 -MIDDLE_OFFSET_Y);
-        if (random.nextDouble() <0.5)
-            y = (int)dimension.getHeight() - y;
-
-        return new Point(x,y);
+    /**
+     * Генерує рандомну точку, яка не входить в центр екрану
+     * @return точка
      */
-
     private Point generateRandomPoint() {
         final int OFFSET = CIRCLE_RADIUS * 2;
         final int MIDDLE_OFFSET_X = 200;
@@ -95,7 +85,8 @@ public class GeneratorNetwork {
             while(true){
                 Point p = generateRandomPoint();
                 if (!Node.intersectNodes(nodes,p,RADIUS_INTERSECT*2)) {
-                    nodes.add(new Node(p));
+                    int lenBuffer = bufferLengths[random.nextInt(bufferLengths.length)];
+                    nodes.add(new Node(p,lenBuffer));
                     break;
                 }
             }

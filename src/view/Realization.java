@@ -76,6 +76,8 @@ public class Realization extends MainWindow {
 
         //Обробка вибору автоматичної ваги каналу
         autoWeightCheckBox.addActionListener(new AutoWeightCheckBoxListener());
+        //Обробка вибору автоматичної довжини вузла
+        autoLengthCheckBox.addActionListener(new AutoLengthCheckBoxListener());
 
         //Обробка вибору ваги каналу
         comboBoxWeight.addActionListener(new SelectWeightActionListener());
@@ -100,6 +102,10 @@ public class Realization extends MainWindow {
         //Заповнення даних ваг каналів
         for (int w : Link.WEIGHTS)
             comboBoxWeight.addItem(w);
+
+        //Заповнення даних довжин буферу вузла
+        for (int w : Link.BUFFER_LENGTHS)
+            lengthComboBox.addItem(w);
 
         //Ініціалізація списку вузлів і каналів
         nodes = new ArrayList<>();
@@ -181,6 +187,13 @@ public class Realization extends MainWindow {
         //якщо вибрали інший вузол, але вже був вибраний інший вузол
         unselectNodeAndLink();
         selectedNode = node;
+
+        //вибрати довжину буферу
+        for(int i=0;i<Link.BUFFER_LENGTHS.length;i++)
+            if (Link.BUFFER_LENGTHS[i] == node.getBufferLength()){
+                lengthComboBox.setSelectedIndex(i);
+            }
+
         image1.drawSelectedNode(node);
         selectElementState();
     }
@@ -304,12 +317,27 @@ public class Realization extends MainWindow {
     }
 
     /**
+     * Визначає довжину буфера вузла:
+     * якщо {@code autoLengthCheckBox} вибраний, поверне рандомне значення із заданих за умовою
+     * @return довжина буферу
+     */
+    private int getLengthOfBuffer(){
+        if (autoLengthCheckBox.isSelected()) {
+            Random random = new Random();
+            return Link.BUFFER_LENGTHS[random.nextInt(Link.BUFFER_LENGTHS.length)];
+        }
+        return lengthComboBox.getItemAt(lengthComboBox.getSelectedIndex());
+    }
+
+    /**
      * Додати новий вузол
      * @param p точка знаходженн вузла на полотні
      * @return створений вузол
      */
     private Node addNode(Point p) {
-        Node node = new Node(p);
+        //TODO
+
+        Node node = new Node(p,getLengthOfBuffer());
         nodes.add(node);
         image1.drawNode(node);
         return node;
@@ -374,6 +402,7 @@ public class Realization extends MainWindow {
         nodeButton.setSelected(false);
         removeButton.setSelected(false);
         communicationParameters.setVisible(false);
+        nodeParameters.setVisible(false);
         switch (state){
             case CURSOR:
                 image1.addMouseListener(basicMouseListener);
@@ -382,6 +411,7 @@ public class Realization extends MainWindow {
             case NODE:
                 image1.addMouseListener(basicMouseListener);
                 image1.addMouseListener(addNodeMouseListener);
+                nodeParameters.setVisible(true);
                 nodeButton.setSelected(true);
                 break;
             case CHANNEL:
@@ -724,6 +754,22 @@ public class Realization extends MainWindow {
             } else {
                 labelWeight.setEnabled(true);
                 comboBoxWeight.setEnabled(true);
+            }
+        }
+    }
+
+    /**
+     * Обробка вибору автоматичної довжини буфера вузла
+     */
+    private class AutoLengthCheckBoxListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (autoLengthCheckBox.isSelected()) {
+                labelLength.setEnabled(false);
+                lengthComboBox.setEnabled(false);
+            } else {
+                labelLength.setEnabled(true);
+                lengthComboBox.setEnabled(true);
             }
         }
     }

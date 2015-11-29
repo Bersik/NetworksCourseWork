@@ -18,14 +18,18 @@ public class Node implements Serializable {
     //Номер вузла
     private int id;
 
+    //Довжина буферу
+    private int bufferLength;
+
     //Стан вузла (включений, виключений)
     private boolean active;
 
     private ArrayList<Link> links;
 
-    public Node(Point point){
+    public Node(Point point,int bufferLength){
         this.position = point;
         this.id = nextId++;
+        this.bufferLength = bufferLength;
         links = new ArrayList<>();
         active = true;
     }
@@ -72,7 +76,6 @@ public class Node implements Serializable {
         return links;
     }
 
-
     /**
      * Перевірка накладання точки на якийсь вузол
      * @param point точка натиску
@@ -94,4 +97,14 @@ public class Node implements Serializable {
     public boolean isActive() {
         return active;
     }
+
+    public int getBufferLength() {
+        return bufferLength;
+    }
+
+    public void setBufferLength(int bufferLength) {
+        this.bufferLength = bufferLength;
+    }
+
+
 }

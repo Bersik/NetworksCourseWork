@@ -31,12 +31,21 @@ public class Settings {
     public static final Color DEFAULT_COLOR = Color.black;
 
     //Значення параметрів по замовчуванню
+
+    //Кількість вузлів
     public static final int COUNT_COMMUTATION_NODES = 24;
+    //Кількість супутникових каналів
     public static final int COUNT_SATELLITE_LINKS = 2;
+    //Середній ступінь мережі
     public static final int DEGREE_NETWORKS = 4;
 
+    //Мінімальне значення ваги каналу
     public static final int MIN_VALUE_WEIGHT_OF_RANGE = 2;
+    //Максимальне значення ваги каналу
     public static final int MAX_VALUE_WEIGHT_OF_RANGE = 20;
 
-
+    //Мінімальне значення довжини буферу
+    public static final int MIN_VALUE_LENGTH_OF_BUFFER = 10;
+    //Максимальне значення довжини буферу
+    public static final int MAX_VALUE_LENGTH_OF_BUFFER = 30;
 }

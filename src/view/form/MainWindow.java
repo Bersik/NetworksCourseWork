@@ -30,6 +30,7 @@ public class MainWindow extends JFrame{
     protected JPanel communicationParameters;
     protected JCheckBox autoWeightCheckBox;
     protected JComboBox<Integer> comboBoxWeight;
+    protected JComboBox<Integer> lengthComboBox;
     protected view.Image image1;
     protected JPanel weightPanel;
     protected JLabel labelWeight;
@@ -38,6 +39,9 @@ public class MainWindow extends JFrame{
     protected JTabbedPane tabbedPane1;
     protected JButton saveButton;
     protected JButton openButton;
+    protected JCheckBox autoLengthCheckBox;
+    protected JPanel nodeParameters;
+    protected JLabel labelLength;
 
     protected void groupRadioButtons(){
         communicationMethod.add(buttonDuplex);

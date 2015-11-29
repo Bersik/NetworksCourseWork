@@ -26,6 +26,13 @@ public class CreateNetworkDialog2 extends JDialog {
     private JTextField toTextField;
     private JPanel listPanel;
     private JPanel rangePanel;
+    private JRadioButton listLengthLinkRadioButton;
+    private JRadioButton rangeLengthLinkRadioButton;
+    private JTextField rangeLengthLinkTextField;
+    private JTextField fromLengthTextField;
+    private JTextField toLengthTextField;
+    private JPanel listLengthPanel;
+    private JPanel rangeLengthPanel;
     private Realization frame;
     private GeneratorNetwork generatorNetwork;
 
@@ -58,6 +65,9 @@ public class CreateNetworkDialog2 extends JDialog {
         listRadioButton.addActionListener(new ChangeActionListener());
         rangeRadioButton.addActionListener(new ChangeActionListener());
 
+        listLengthLinkRadioButton.addActionListener(new ChangeLengthTypeActionListener());
+        rangeLengthLinkRadioButton.addActionListener(new ChangeLengthTypeActionListener());
+
         buttonOK.requestFocus();
     }
 
@@ -67,28 +77,73 @@ public class CreateNetworkDialog2 extends JDialog {
         int degreeNetworkValue = Integer.parseInt(degreeNetwork.getText());
 
         Dimension dimension = frame.getImageSize();
-        int[] weights;
 
-        //якщо список значень
-        if (listRadioButton.isSelected()){
-            String[] strWeights = rangeTextField.getText().trim().split(" ");
-            weights = new int[strWeights.length];
-            for(int i=0;i<strWeights.length;i++)
-                weights[i] = Integer.parseInt(strWeights[i]);
-        }else{
-            int from = Integer.parseInt(fromTextField.getText());
-            int to = Integer.parseInt(toTextField.getText());
+        int[] weights = getWeight();
 
-            weights = new int[to-from+1];
-            for(int i=0;i<to-from+1;i++)
-                weights[i] = from+i;
-        }
+        int[] bufferLengths = getBufferLengths();
 
-        generatorNetwork = new GeneratorNetwork(
-                dimension, countCommutationNodesValue, countSatelliteLinksValue, degreeNetworkValue,weights);
+        generatorNetwork = new GeneratorNetwork(dimension, countCommutationNodesValue, countSatelliteLinksValue,
+                degreeNetworkValue,weights,bufferLengths);
 
         dispose();
     }
+
+    /**
+     * Визначити допустимі ваги для каналів
+     * @return список ваг
+     */
+    private int[] getWeight(){
+        //якщо список значень для ваги каналів
+        if (listRadioButton.isSelected()){
+            return getWeightList(rangeTextField.getText());
+        }
+        //якщо діапазон значень для ваги каналів
+        int from = Integer.parseInt(fromTextField.getText());
+        int to = Integer.parseInt(toTextField.getText());
+        return getValuesOfRange(from,to);
+    }
+
+    /**
+     * Визначити допустимі значення для довжини буферів
+     * @return список довжин
+     */
+    private int[] getBufferLengths(){
+        //якщо список значень для довжини буфурів
+        if (listLengthLinkRadioButton.isSelected()){
+            return getWeightList(rangeLengthLinkTextField.getText());
+        }
+        //якщо список значень для довжини буфурів
+        int from = Integer.parseInt(fromLengthTextField.getText());
+        int to = Integer.parseInt(toLengthTextField.getText());
+        return getValuesOfRange(from,to);
+    }
+
+    /**
+     * Знаходить список значень в рядку, розділені ' '
+     * @param text рядок
+     * @return список значень
+     */
+    private int[] getWeightList(String text){
+        String[] strWeights = text.trim().split(" ");
+        int[] weights = new int[strWeights.length];
+        for(int i=0;i<strWeights.length;i++)
+            weights[i] = Integer.parseInt(strWeights[i]);
+        return weights;
+    }
+
+    /**
+     * Заходить всі значення в діапазоні
+     * @param from початок
+     * @param to кінець
+     * @return список значень
+     */
+    private int[] getValuesOfRange(int from,int to){
+        int[] weights = new int[to-from+1];
+        for(int i=0;i<to-from+1;i++)
+            weights[i] = from+i;
+        return weights;
+    }
+
 
     private void onCancel() {
 // add your code here if necessary
@@ -97,13 +152,21 @@ public class CreateNetworkDialog2 extends JDialog {
 
     public void launch() {
         StringBuilder sb = new StringBuilder();
+
+        //Ваги каналів по замовчуванню
         for (int weight: Link.WEIGHTS)
             sb.append(weight).append(" ");
-
         rangeTextField.setText(sb.toString());
         fromTextField.setText(Integer.toString(MIN_VALUE_WEIGHT_OF_RANGE));
         toTextField.setText(Integer.toString(MAX_VALUE_WEIGHT_OF_RANGE));
 
+        sb = new StringBuilder();
+        //Довжини буферів по замовчуванню
+        for (int weight: Link.BUFFER_LENGTHS)
+            sb.append(weight).append(" ");
+        rangeLengthLinkTextField.setText(sb.toString());
+        fromLengthTextField.setText(Integer.toString(MIN_VALUE_LENGTH_OF_BUFFER));
+        toLengthTextField.setText(Integer.toString(MAX_VALUE_LENGTH_OF_BUFFER));
 
         pack();
         setLocationRelativeTo(frame);
@@ -137,6 +200,20 @@ public class CreateNetworkDialog2 extends JDialog {
             }else {
                 rangePanel.setVisible(false);
                 listPanel.setVisible(true);
+            }
+            pack();
+        }
+    }
+
+    private class ChangeLengthTypeActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (rangeLengthLinkRadioButton.isSelected()){
+                rangeLengthPanel.setVisible(true);
+                listLengthPanel.setVisible(false);
+            }else {
+                rangeLengthPanel.setVisible(false);
+                listLengthPanel.setVisible(true);
             }
             pack();
         }
