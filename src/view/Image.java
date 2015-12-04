@@ -4,6 +4,10 @@ import network.ConnectionType;
 import network.Link;
 import network.LinkType;
 import network.Node;
+import network.model.packet.HelloPacket;
+import network.model.packet.LSAPacket;
+import network.model.packet.Packet;
+import network.model.packet.accept.AcceptPacket;
 
 import javax.swing.*;
 import java.awt.*;
@@ -153,7 +157,46 @@ public class Image extends JPanel {
      * @param color колір
      */
     public void drawLink(Link link, Color color) {
-        //TODO активний і не активний канал (тобто працює чи не працює)
+
+        Point pos1 = link.getNode1().getPosition();
+        Point pos2 = link.getNode2().getPosition();
+
+        //Виводимо всі пакети, які є в каналі
+        for (Packet packet : link.getPackets()) {
+
+            double pos = packet.getPosition();
+
+
+            int xl = pos1.x - pos2.x;
+            int yl = pos1.y - pos2.y;
+            double xc = (double) xl / (double) link.getWeight();
+            double yc = (double) yl / (double) link.getWeight();
+
+            Point coord;
+            if (packet.getFrom() == link.getNode1())
+                coord = new Point((int) ((double) pos1.x - pos * xc), (int) ((double) pos1.y - pos * yc));
+            else
+                coord = new Point((int) ((double) pos2.x + pos * xc), (int) ((double) pos2.y + pos * yc));
+
+            coord.x += 5;
+            coord.y -= 20;
+
+            Point coordText = new Point(coord.x+5,coord.y+15);
+
+            graphics.setColor(PACKET_COLOR);
+            if (packet instanceof HelloPacket)
+                graphics.setColor(PACKET_COLOR_HELLO);
+            else if (packet instanceof LSAPacket)
+                graphics.setColor(PACKET_COLOR_LSA);
+            else if (packet instanceof AcceptPacket)
+                graphics.setColor(PACKET_COLOR_ACCEPT);
+            graphics.fillRect(coord.x, coord.y, 40, 20);
+            graphics.setColor(DEFAULT_COLOR);
+            graphics.drawRect(coord.x, coord.y, 40, 20);
+            graphics.drawString(Integer.toString(packet.getId()),coordText.x,coordText.y);
+
+        }
+
         Stroke tmp = graphics.getStroke();
         final float width;
         if (link.getLinkType() == LinkType.DUPLEX)
@@ -173,8 +216,6 @@ public class Image extends JPanel {
             graphics.setStroke(new BasicStroke(width));
         }
 
-        Point pos1 = link.getNode1().getPosition();
-        Point pos2 = link.getNode2().getPosition();
 
         //Якщо канал - напівдуплекс
         if (link.getLinkType() == LinkType.HALF_DUPLEX) {
@@ -239,4 +280,13 @@ public class Image extends JPanel {
             drawLink(link);
     }
 
+    public void drawPackets(ArrayList<Link> links) {
+        /*for(Link link:links){
+            ArrayList<Packet> packets =  link.getPackets();
+            for(Packet packet:packets){
+                int pos = packet.getPosition();
+
+            }
+        }*/
+    }
 }

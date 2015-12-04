@@ -13,10 +13,10 @@ public class FileWorks {
      * Записати в файл
      *
      * @param file    файл
-     * @param network мережа
+     * @param networkSerialization мережа
      * @throws IOException
      */
-    public static void writeToFile(File file, Network network) throws IOException {
+    public static void writeToFile(File file, NetworkSerialization networkSerialization) throws IOException {
         String ext = NetworkFileFilter.getExtension(file);
 
         if ((ext == null) || (!ext.equals(NetworkFileFilter.ntwFile))) {
@@ -24,7 +24,7 @@ public class FileWorks {
         }
         FileOutputStream fos = new FileOutputStream(file);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
-        oos.writeObject(network);
+        oos.writeObject(networkSerialization);
         oos.flush();
         oos.close();
     }
@@ -38,9 +38,9 @@ public class FileWorks {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    public static Network loadOfFile(File file) throws IOException, ClassNotFoundException {
+    public static NetworkSerialization loadOfFile(File file) throws IOException, ClassNotFoundException {
         FileInputStream fis = new FileInputStream(file);
         ObjectInputStream oin = new ObjectInputStream(fis);
-        return (Network) oin.readObject();
+        return (NetworkSerialization) oin.readObject();
     }
 }

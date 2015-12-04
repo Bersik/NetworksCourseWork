@@ -8,6 +8,7 @@ import javax.swing.*;
  * @author Bersik
  */
 
-public abstract class InformationFrame extends JFrame{
+public abstract class InformationFrame extends JDialog{
     public abstract void loadForm();
+    public abstract void update();
 }

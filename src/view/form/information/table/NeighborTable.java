@@ -1,25 +1,30 @@
 package view.form.information.table;
 
 import network.Link;
+import network.Node;
+import network.model.Network;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Created on 0:05 30.11.2015
+ * Created on 22:55 03.12.2015
  *
  * @author Bersik
  */
-public class LinksTableModel extends AbstractTableModel {
+public class NeighborTable extends AbstractTableModel {
 
-    private final String[] columnNames = {"№","Куди","Вага","Тип","Тип","Статус"};
+    private final String[] columnNames = {"Вузол","Пройшло з останнього оновлення"};
 
-    private List<Link> links;
+    private ArrayList<Map.Entry<Node,Long>> nodes;
 
-    public LinksTableModel(List<Link> links) {
-        this.links = links;
+    public NeighborTable(HashMap<Node, Long> neighbors) {
+        nodes = new ArrayList<>(neighbors.entrySet());
     }
 
     @Override
@@ -41,25 +46,17 @@ public class LinksTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return links.size();
+        return nodes.size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Link link = links.get(rowIndex);
+        Map.Entry<Node,Long> entry = nodes.get(rowIndex);
         switch (columnIndex) {
             case 0:
-                return Integer.toString(rowIndex);
+                return Integer.toString(entry.getKey().getId());
             case 1:
-                return Integer.toString(link.getNode2().getId());
-            case 2:
-                return Integer.toString(link.getWeight());
-            case 3:
-                return link.getConnectionType().toString();
-            case 4:
-                return link.getLinkType().toString();
-            case 5:
-                return (link.isActive())? "Активний":"Відключений";
+                return Long.toString(Network.getTime() - entry.getValue());
         }
         return "";
     }
@@ -75,9 +72,8 @@ public class LinksTableModel extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths[] = {30,40,40,80,80,70};
+        final int widths[] = {40,120};
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        JTableHeader th = table.getTableHeader();
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 

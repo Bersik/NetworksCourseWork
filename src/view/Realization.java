@@ -1,17 +1,22 @@
 package view;
 
 import files.FileWorks;
-import files.Network;
+import files.NetworkSerialization;
 import files.NetworkFileFilter;
 import network.*;
+import network.model.Network;
 import view.form.CreateNetworkDialog2;
 import view.form.MainWindow;
 import view.form.information.InformationFrame;
+import view.form.information.LinkInformation;
 import view.form.information.NodeInformation;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import static settings.Settings.*;
+import static settings.Settings.DELAY_MAX;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -26,12 +31,6 @@ import java.util.Random;
  * @author Bersik
  */
 public class Realization extends MainWindow {
-    //Список вузлів
-    private ArrayList<Node> nodes;
-
-    //Список каналів
-    private ArrayList<Link> links;
-
     //Ексземляр обробника натисення клавіш миші в базовому режимі (Курсор + "Вузол")
     private MouseListener basicMouseListener = new BasicMouseListener();
     //Ексземляр обробника натиснення клавіш миші в режим "Вузол"
@@ -57,6 +56,13 @@ public class Realization extends MainWindow {
     //Інформаційне вікно
     private InformationFrame informationFrame;
 
+    //Список вузлів
+    private ArrayList<Node> nodes;
+    //Список каналів
+    private ArrayList<Link> links;
+
+    private Network network;
+
     public Realization() {
         setTitle("Курсовий проект: Комп'ютерні мережі powered by Кісільчук С. В. КВ-21");
         //Мінімальний розмір форми
@@ -67,6 +73,10 @@ public class Realization extends MainWindow {
 
         //Скривавамо параметри каналів
         communicationParameters.setVisible(false);
+
+        links = new ArrayList<>();
+        nodes = new ArrayList<>();
+        network = new Network(this, nodes, links,calculateDelay(sliderSpeed.getValue()));
 
         //Обробка натиску кнопки "Курсор"
         cursorButton.addActionListener(new CursorButtonListener());
@@ -102,8 +112,14 @@ public class Realization extends MainWindow {
         //Активація/деактивація елементу
         activeCheckBox.addActionListener(new ActiveElementCheckBox());
 
+        //Відкриття і збереження мережі
         saveButton.addActionListener(new SaveButtonListener());
         openButton.addActionListener(new OpenButtonListener());
+
+        //Vоделювання
+        startStopButton.addActionListener(new StartStopActionListener());
+        pauseButton.addActionListener(new PauseButtonActionListener());
+        stepButton.addActionListener(new StepButtonActionListener());
 
         //Заповнення даних ваг каналів
         for (int w : Link.WEIGHTS)
@@ -113,16 +129,15 @@ public class Realization extends MainWindow {
         for (int w : Link.BUFFER_LENGTHS)
             lengthComboBox.addItem(w);
 
-        //Ініціалізація списку вузлів і каналів
-        nodes = new ArrayList<>();
-        links = new ArrayList<>();
-
         //Фокус на кнопці створення мережі
         createNetworkButton.requestFocus();
 
         //ініціалізація вибору файлу
         fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new NetworkFileFilter());
+
+        //ініціалізацію управління швидкістю
+        sliderSpeed.addChangeListener(new SliderSpeedChangeListener());
 
         //По замовчуванню, спочатку просто оброблюємо натиски на різні вузли і канали
         changeState(State.CURSOR);
@@ -245,7 +260,7 @@ public class Realization extends MainWindow {
      *
      * @param link канал
      */
-    private void selectLink(Link link) {
+    public void selectLink(Link link) {
         //TODO також вибрати вагу в полі і інші парамети
         unselectNodeAndLink();
         selectedLink = link;
@@ -382,6 +397,8 @@ public class Realization extends MainWindow {
      * @param link вузол
      */
     private void removeLink(Link link) {
+        link.getNode1().removeLink(link);
+        link.getNode2().removeLink(link);
         links.remove(link);
         redrawAll();
     }
@@ -397,6 +414,9 @@ public class Realization extends MainWindow {
             image1.drawSelectedLink(selectedLink);
         else if (selectedNode != null)
             image1.drawSelectedNode(selectedNode);
+        if (state == State.MODELING) {
+            image1.drawPackets(links);
+        }
     }
 
     /**
@@ -408,6 +428,9 @@ public class Realization extends MainWindow {
         //Очистити всі оброблювачі подій з image
         for (MouseListener mouseListener : image1.getMouseListeners()) {
             image1.removeMouseListener(mouseListener);
+        }
+        for(MouseMotionListener mouseMotionListener:image1.getMouseMotionListeners()){
+            image1.removeMouseMotionListener(mouseMotionListener);
         }
 
         this.state = state;
@@ -428,6 +451,7 @@ public class Realization extends MainWindow {
         switch (state) {
             case CURSOR:
                 image1.addMouseListener(basicMouseListener);
+                image1.addMouseMotionListener(new MoveListener());
                 cursorButton.setSelected(true);
                 break;
             case NODE:
@@ -514,6 +538,11 @@ public class Realization extends MainWindow {
         return image1.getSize();
     }
 
+    public void closeInformationWindow() {
+        informationFrame = null;
+    }
+
+
     //Обробка натиснень клавіш на формі
 
     /**
@@ -546,6 +575,67 @@ public class Realization extends MainWindow {
             changeState(State.NODE);
         }
     }
+
+    /**
+     * Запуск/зупинка моделювання
+     */
+    private class StartStopActionListener implements ActionListener {
+        final String startStr = "Увімкнути";
+        final String stopStr = "Вимкнути";
+        boolean stateStart = true;
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (stateStart) {
+                startStopButton.setText(stopStr);
+                pauseButton.setEnabled(true);
+                stepButton.setEnabled(true);
+                stateStart = false;
+                network.startTimer();
+            } else {
+                startStopButton.setText(startStr);
+                pauseButton.setEnabled(false);
+                stepButton.setEnabled(false);
+                stateStart = true;
+                network.stopTimer();
+            }
+        }
+    }
+
+    /**
+     * Пауза моделювання
+     */
+    private class PauseButtonActionListener implements ActionListener {
+        final String pauseStr = "Пауза";
+        final String continueStr = "Продовжити";
+        boolean statePause = true;
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (!statePause) {
+                //пауза
+                pauseButton.setText(continueStr);
+                statePause = true;
+                network.pauseTimer();
+            } else {
+                //продовжити
+                pauseButton.setText(pauseStr);
+                statePause = false;
+                network.continueTimer();
+            }
+        }
+    }
+
+    /**
+     * Крок моделювання
+     */
+    private class StepButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            network.stepTimer();
+        }
+    }
+
 
     /**
      * Обробка натиску кнопки додавання каналів
@@ -722,19 +812,35 @@ public class Realization extends MainWindow {
          *
          * @param e інформація про подію
          */
-        @Override
+/*        @Override
         public void mouseReleased(MouseEvent e) {
             Point p = e.getPoint();
             //Якщо натиснута ліва клавіша миші
             if (e.getButton() == MouseEvent.BUTTON1) {
                 if (isSelectedNode() && !selectedNode.intersect(p, RADIUS_ACCURACY) &&
-                        !intersectNodes(p, RADIUS_INTERSECT) /*&& !intersectLinks(p)*/) {
+                        !intersectNodes(p, RADIUS_INTERSECT) //&& !intersectLinks(p)
+        ) {
                     selectedNode.setPosition(p);
                     redrawAll();
                     selectNode(selectedNode);
                 }
             }
+        }*/
+
+    }
+
+    private class MoveListener extends MouseMotionAdapter {
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            Point p = e.getPoint();
+            if (isSelectedNode() /*&& !selectedNode.intersect(p, RADIUS_ACCURACY) *//*&&
+                    !intersectNodes(p, RADIUS_INTERSECT)*/ /*&& !intersectLinks(p)*/) {
+                selectedNode.setPosition(p);
+                redrawAll();
+                selectNode(selectedNode);
+            }
         }
+
     }
 
     private class RemoveElementListener extends MouseAdapter {
@@ -766,25 +872,26 @@ public class Realization extends MainWindow {
         }
     }
 
-    private class DoubleClickImageListener extends MouseAdapter{
+    private class DoubleClickImageListener extends MouseAdapter {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            if ((e.getButton() == MouseEvent.BUTTON1)&& (e.getClickCount() == 2)){
+            if ((e.getButton() == MouseEvent.BUTTON1) && (e.getClickCount() == 2)) {
                 Point p = e.getPoint();
 
                 if (informationFrame != null)
                     informationFrame.dispose();
                 //Якщо це вузол
-                Node node = intersectNode(p,RADIUS_ACCURACY);
-                if (node != null){
-                        informationFrame = new NodeInformation(Realization.this, node);
-                        informationFrame.loadForm();
-                }else{
+                Node node = intersectNode(p, RADIUS_ACCURACY);
+                if (node != null) {
+                    informationFrame = new NodeInformation(Realization.this, node);
+                    informationFrame.loadForm();
+                } else {
                     //якщо це канал
                     Link link = intersectLink(p);
-                    if (link != null){
-
+                    if (link != null) {
+                        informationFrame = new LinkInformation(Realization.this, link);
+                        informationFrame.loadForm();
                     }
                 }
             }
@@ -881,11 +988,16 @@ public class Realization extends MainWindow {
     private class CreateNetworkButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            GeneratorNetwork generatorNetwork = CreateNetworkDialog2.showDialog(Realization.this);;
+            GeneratorNetwork generatorNetwork = CreateNetworkDialog2.showDialog(Realization.this);
+            ;
             if (generatorNetwork != null) {
                 clearAll();
+                links.clear();
                 links = generatorNetwork.getLinks();
                 nodes = generatorNetwork.getNodes();
+                network.destroy();
+                network = new Network(Realization.this, nodes, links, calculateDelay(sliderSpeed.getValue()));
+
                 redrawAll();
             }
 
@@ -920,7 +1032,7 @@ public class Realization extends MainWindow {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
                 try {
-                    FileWorks.writeToFile(file, new Network(links, nodes));
+                    FileWorks.writeToFile(file, new NetworkSerialization(links, nodes));
                 } catch (IOException e1) {
                     JOptionPane.showMessageDialog(Realization.this,
                             "Не вдалося зберегти файл.", "Помилка", JOptionPane.ERROR_MESSAGE);
@@ -937,10 +1049,14 @@ public class Realization extends MainWindow {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
                 try {
-                    Network network = FileWorks.loadOfFile(file);
+                    NetworkSerialization networkSerialization = FileWorks.loadOfFile(file);
                     clearAll();
-                    links = network.links;
-                    nodes = network.nodes;
+                    links = networkSerialization.links;
+                    nodes = networkSerialization.nodes;
+                    if (network != null)
+                        network.destroy();
+                    network = new Network(Realization.this, nodes, links, calculateDelay(sliderSpeed.getValue()));
+                    Node.reset(nodes.size());
                     redrawAll();
                 } catch (IOException | ClassNotFoundException e1) {
                     JOptionPane.showMessageDialog(Realization.this,
@@ -948,6 +1064,36 @@ public class Realization extends MainWindow {
                 }
             }
         }
+    }
+
+    /**
+     * Обробка змінення швидкості
+     */
+    private class SliderSpeedChangeListener implements ChangeListener {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            int delay = calculateDelay(sliderSpeed.getValue());
+            if (network != null)
+                network.setDelay(delay);
+        }
+    }
+
+    /**
+     * Вираховує затримку при моделюванні
+     * @param pos позиція слайдера
+     * @return затримку
+     */
+    public int calculateDelay(int pos){
+        pos = sliderSpeed.getValue() - sliderSpeed.getMinimum();
+        double delta = (double)(DELAY_MAX - DELAY_MIN) /(double)(sliderSpeed.getMaximum() - sliderSpeed.getMinimum());
+        return (int)(DELAY_MAX - pos * delta);
+    }
+
+    public void update(){
+        redrawAll();
+        if (informationFrame != null)
+            informationFrame.update();
+
     }
 
 }

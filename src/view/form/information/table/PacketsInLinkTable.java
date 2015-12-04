@@ -1,25 +1,29 @@
 package view.form.information.table;
 
 import network.Link;
+import network.model.packet.Packet;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created on 0:05 30.11.2015
+ * Created on 15:27 03.12.2015
  *
  * @author Bersik
  */
-public class LinksTableModel extends AbstractTableModel {
 
-    private final String[] columnNames = {"№","Куди","Вага","Тип","Тип","Статус"};
+public class PacketsInLinkTable extends AbstractTableModel {
 
-    private List<Link> links;
+    private final String[] columnNames = {"ID","Звідки","Куди","Тип","Позиція","№ пакету","Всього"};
 
-    public LinksTableModel(List<Link> links) {
-        this.links = links;
+    private ArrayList<Packet> packets;
+
+
+    public PacketsInLinkTable(Link link) {
+        packets = link.getPackets();
     }
 
     @Override
@@ -41,25 +45,34 @@ public class LinksTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return links.size();
+        return packets.size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Link link = links.get(rowIndex);
+        Packet packet = packets.get(rowIndex);
+
         switch (columnIndex) {
             case 0:
-                return Integer.toString(rowIndex);
+                //"ID"
+                return Integer.toString(packet.getId());
             case 1:
-                return Integer.toString(link.getNode2().getId());
+                //"Звідки"
+                return Integer.toString(packet.getFrom().getId());
             case 2:
-                return Integer.toString(link.getWeight());
+                //"Куди"
+                return Integer.toString(packet.getTo().getId());
             case 3:
-                return link.getConnectionType().toString();
+                //"Тип"
+                return packet.getClass().getSimpleName();
             case 4:
-                return link.getLinkType().toString();
+                //"Позиція"
+                return Integer.toString(packet.getPosition());
             case 5:
-                return (link.isActive())? "Активний":"Відключений";
+                //"# пакету"
+                return Integer.toString(packet.getNumber());
+            case 6:
+                return Integer.toString(packet.getTotalNumber());
         }
         return "";
     }
@@ -75,12 +88,11 @@ public class LinksTableModel extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths[] = {30,40,40,80,80,70};
+        final int widths[] = {50,50,50,80,60,70,70};
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         JTableHeader th = table.getTableHeader();
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
     }
-
 }

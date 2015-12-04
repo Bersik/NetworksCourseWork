@@ -1,21 +1,26 @@
 package view.form.information;
 
+import network.Link;
 import network.Node;
+import network.model.Buffer;
 import view.Realization;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import view.form.information.table.*;
 
 public class NodeInformation extends InformationFrame {
     private JPanel contentPane;
     private JButton buttonClose;
-    private JProgressBar outProgressBar;
-    private JProgressBar inProgressBar;
     private JFormattedTextField bufferSizeFormattedTextField;
-    private JTable LinksTable;
-    private JTable CommunicationTable;
+    private JTable linksTable;
+    private JTable communicationTable;
     private JCheckBox activeCheckBox;
+    private JPanel buffersBlock;
+    private JTabbedPane tabbedPane1;
+    private JTable neighborsTable;
+    private JTable topologyBaseTable;
     private Realization frame;
     private JScrollPane scrollPane;
 
@@ -25,6 +30,7 @@ public class NodeInformation extends InformationFrame {
         this.frame = frame;
         this.node = node;
         setContentPane(contentPane);
+
         setTitle("Вузол №" + Integer.toString(node.getId()));
         getRootPane().setDefaultButton(buttonClose);
 
@@ -58,7 +64,7 @@ public class NodeInformation extends InformationFrame {
                 } else {
                     node.deActivate();
                 }
-                initializeTable();
+                initialize();
                 frame.redrawAll();
                 frame.selectNode(node);
             }
@@ -66,39 +72,66 @@ public class NodeInformation extends InformationFrame {
     }
 
     private void onClose() {
-// add your code here
+        frame.closeInformationWindow();
         dispose();
     }
 
 
-    private void initializeTable(){
+    private void initialize(){
         activeCheckBox.setSelected(node.isActive());
         bufferSizeFormattedTextField.setText(Integer.toString(node.getBufferLength()));
 
-        LinksTable.setModel(new LinksTableModel(node.getLinks()));
-        LinksTableModel.setColumnsWidth(LinksTable);
+        linksTable.setModel(new LinksTableModel(node.getLinks()));
+        LinksTableModel.setColumnsWidth(linksTable);
 
-        LinksTable.setFillsViewportHeight(true);
+        linksTable.setFillsViewportHeight(true);
+        loadBuffers();
+
+        neighborsTable.setModel(new NeighborTable(node.getNeighbors()));
+        topologyBaseTable.setModel(new TopologyBaseTable(node));
+        TopologyBaseTable.setColumnsWidth(topologyBaseTable);
     }
 
     @Override
     public void loadForm() {
         pack();
         setLocationRelativeTo(frame);
-        initializeTable();
+        initialize();
         setVisible(true);
+    }
+
+    @Override
+    public void update() {
+        loadBuffers();
+        neighborsTable.setModel(new NeighborTable(node.getNeighbors()));
+        topologyBaseTable.setModel(new TopologyBaseTable(node));
+    }
+
+    public void loadBuffers(){
+        buffersBlock.removeAll();
+        buffersBlock.setLayout(new GridLayout(node.getLinks().size(),2));
+        int bufferSizes = node.getBufferLength();
+        for(Link link:node.getLinks()){
+            double percent = (double)node.getBufferSize(link) / (double)bufferSizes;
+            if (percent < 0)
+                percent = 0;
+            else if (percent > 1)
+                percent = 1;
+            JProgressBar progressBar = new JProgressBar();
+            progressBar.setMinimum(0);
+            progressBar.setMaximum(100);
+            progressBar.setValue((int)(percent*100));
+
+            buffersBlock.add(new JLabel("До " + Integer.toString(link.getAnotherNode(node).getId())));
+            buffersBlock.add(progressBar);
+            pack();
+        }
     }
 
     private void createUIComponents() {
 
     }
 
-/*
 
-    public static void main(String[] args) {
-        NodeInformation dialog = new NodeInformation();
-        dialog.pack();
-        dialog.setVisible(true);
-        System.exit(0);
-    }*/
+
 }

@@ -6,5 +6,5 @@ package view;
  * @author Bersik
  */
 public enum State {
-    CURSOR, NODE, CHANNEL, REMOVE,
+    CURSOR, NODE, CHANNEL, REMOVE, MODELING,
 }

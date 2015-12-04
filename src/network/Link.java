@@ -1,5 +1,6 @@
 package network;
 
+import network.model.packet.Packet;
 import settings.Settings;
 
 import java.awt.*;
@@ -21,7 +22,21 @@ public class Link implements Serializable {
     private LinkType linkType;
     private ConnectionType connectionType;
 
+
     private boolean active;
+
+    //-------Communication
+    //список пакетів, які знаходять в даний момент в каналі
+    private ArrayList<Packet> packets;
+
+    //Скільки пакетів було віддано в канал
+    private int overallCountPackets;
+
+    //Half duplex
+    //Вільний
+    private boolean free;
+    //Напрям передачі (передатчик)
+    private Node transmitter;
 
     public Link(Node node1, Node node2, int weight, LinkType linkType, ConnectionType connectionType) {
         this.node1 = node1;
@@ -30,6 +45,10 @@ public class Link implements Serializable {
         this.linkType = linkType;
         this.connectionType = connectionType;
         active = true;
+
+        packets = new ArrayList<>();
+        overallCountPackets = 0;
+        free = true;
     }
 
     public boolean intersect(Point point) {
@@ -90,6 +109,7 @@ public class Link implements Serializable {
 
     public void deActivate() {
         this.active = false;
+        packets.clear();
     }
 
     /**
@@ -110,4 +130,56 @@ public class Link implements Serializable {
         return active;
     }
 
+    public ArrayList<Packet> getPackets() {
+        return packets;
+    }
+
+    public Node getAnotherNode(Node node){
+        return ((node == node2) || (node == null)) ? node1 : node2;
+    }
+
+    public int countPackets() {
+        return packets.size();
+    }
+
+    public int getOverallCountPackets() {
+        return overallCountPackets;
+    }
+
+    public void addPacket(Packet packet){
+        packets.add(packet);
+        overallCountPackets++;
+    }
+
+    public boolean isFree() {
+        return free;
+    }
+
+
+    public void setFree(boolean free) {
+        this.free = free;
+    }
+
+    public void setOverallCountPackets(int overallCountPackets) {
+        this.overallCountPackets = overallCountPackets;
+    }
+
+
+    public Node getTransmitter() {
+        return transmitter;
+    }
+
+    public void setTransmitter(Node transmitter) {
+        this.transmitter = transmitter;
+    }
+
+    public void removePacket(Packet packet) {
+        packets.remove(packet);
+    }
+
+    public void clean() {
+        packets = new ArrayList<>();
+        overallCountPackets = 0;
+        free = true;
+    }
 }

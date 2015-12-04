@@ -30,6 +30,15 @@ public class Settings {
     public static final Color DEFAULT_COLOR = Color.black;
 
     //Значення параметрів по замовчуванню
+/*
+    //Кількість вузлів
+    public static final int COUNT_COMMUTATION_NODES = 3;
+    //Кількість супутникових каналів
+    public static final int COUNT_SATELLITE_LINKS = 1;
+    //Середній ступінь мережі
+    public static final int DEGREE_NETWORKS = 2;
+*/
+
 
     //Кількість вузлів
     public static final int COUNT_COMMUTATION_NODES = 24;
@@ -38,13 +47,38 @@ public class Settings {
     //Середній ступінь мережі
     public static final int DEGREE_NETWORKS = 4;
 
+
+
     //Мінімальне значення ваги каналу
     public static final int MIN_VALUE_WEIGHT_OF_RANGE = 2;
     //Максимальне значення ваги каналу
     public static final int MAX_VALUE_WEIGHT_OF_RANGE = 20;
 
     //Мінімальне значення довжини буферу
-    public static final int MIN_VALUE_LENGTH_OF_BUFFER = 10;
+    public static final int MIN_VALUE_LENGTH_OF_BUFFER = 1000;
     //Максимальне значення довжини буферу
-    public static final int MAX_VALUE_LENGTH_OF_BUFFER = 30;
+    public static final int MAX_VALUE_LENGTH_OF_BUFFER = 3000;
+
+
+    //---------Communication
+    //час оновлення сусідів
+    public static final int UPDATE_NEIGHBOR = 2000;
+    //скільки часу сусід буде рахуватись підключеним, після прийому від нього HELLO пакету
+    public static final int NEIGHBOR_LIVE = UPDATE_NEIGHBOR*2;
+    //Максимальна кількість пакетів в каналі в одиницю часу
+    public static final int MAX_PACKETS_IN_LINK = 10;
+    //Після скількох пакетів відбується переключення напівдуплексу
+    public static final int COUNT_CHANGE_DIRECTION_HALF_DUPLEX = 5;
+
+    //максимальний розмір пакету
+    public static final int MAX_PACKET_SIZE = 512;
+
+
+    public static final Color PACKET_COLOR = Color.decode("#F6D779");
+    public static final Color PACKET_COLOR_HELLO = Color.decode("#F6D779");
+    public static final Color PACKET_COLOR_LSA = Color.decode("#7992F6");
+    public static final Color PACKET_COLOR_ACCEPT = Color.decode("#79F683");
+
+    public static final int DELAY_MAX = 1000;
+    public static final int DELAY_MIN = 10;
 }

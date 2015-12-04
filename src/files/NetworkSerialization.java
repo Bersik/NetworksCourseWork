@@ -11,11 +11,11 @@ import java.util.ArrayList;
  *
  * @author Bersik
  */
-public class Network implements Serializable {
+public class NetworkSerialization implements Serializable {
     public final ArrayList<Link> links;
     public final ArrayList<Node> nodes;
 
-    public Network(ArrayList<Link> links, ArrayList<Node> nodes) {
+    public NetworkSerialization(ArrayList<Link> links, ArrayList<Node> nodes) {
         this.links = links;
         this.nodes = nodes;
     }

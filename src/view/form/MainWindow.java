@@ -42,13 +42,13 @@ public class MainWindow extends JFrame {
     protected JCheckBox autoLengthCheckBox;
     protected JPanel nodeParameters;
     protected JLabel labelLength;
-    protected JSlider slider1;
+    protected JSlider sliderSpeed;
     protected JRadioButton мінімальнаКількістьТранзитнихВузлівRadioButton;
     protected JRadioButton мінімальнийШляхRadioButton;
     protected JCheckBox генераціяCheckBox;
-    protected JButton увімкнутиButton;
-    protected JButton паузаButton;
-    protected JButton крокButton;
+    protected JButton startStopButton;
+    protected JButton pauseButton;
+    protected JButton stepButton;
 
     protected void groupRadioButtons() {
         communicationMethod.add(buttonDuplex);
