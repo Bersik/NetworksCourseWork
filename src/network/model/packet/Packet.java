@@ -162,4 +162,16 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
     public Node getBaseTo() {
         return baseTo;
     }
+
+    /*
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Packet){
+            if (((Packet) obj).getId() == getId())
+                return true;
+        }
+
+        return false;
+    }*/
 }
+

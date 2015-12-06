@@ -7,6 +7,7 @@ import network.exception.BufferLengthException;
 import network.model.Buffer;
 import network.model.Network;
 import network.model.VirtualConnection;
+import network.model.packet.LSAPacket;
 import network.model.packet.Packet;
 import network.model.packet.PacketComparator;
 import network.model.packet.table.TopologyBase;
@@ -14,6 +15,7 @@ import network.model.packet.table.TopologyBase;
 import java.awt.*;
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static settings.Settings.*;
 
@@ -22,7 +24,7 @@ import static settings.Settings.*;
  *
  * @author Bersik
  */
-public class Node implements Serializable,Comparable<Node> {
+public class Node implements Serializable, Comparable<Node> {
     //номер наступного вузла
     private static int nextId = 0;
 
@@ -55,19 +57,19 @@ public class Node implements Serializable,Comparable<Node> {
     private boolean changesNeighborTable = false;
 
     //прийняті пакети
-    private HashMap<Integer,Packet> performed;
+    private HashMap<Integer, Packet> performed;
 
     //топологічна база
     private TopologyBase topologyBase;
 
     //таблиця маршрутизації
-    private HashMap<Node,Path> routingTable;
+    private HashMap<Node, Path> routingTable;
 
     //віртульані канали
-    private HashMap<Integer,VirtualConnection> virtualConnections;
+    private HashMap<Integer, VirtualConnection> virtualConnections;
 
     //список пакетів, прив'язаних до віртуальних каналів
-    private HashMap<Integer,ArrayList<Packet>> virtualConnectionsQueue;
+    private HashMap<Integer, ArrayList<Packet>> virtualConnectionsQueue;
 
     public Node(Point point, int bufferLength) {
         this.position = point;
@@ -132,7 +134,7 @@ public class Node implements Serializable,Comparable<Node> {
     }
 
     public void addLink(Link link) {
-        outBuffers.put(link, new Buffer(link, bufferLength,new PacketComparator()));
+        outBuffers.put(link, new Buffer(link, bufferLength, new PacketComparator()));
     }
 
     public ArrayList<Link> getLinks() {
@@ -167,12 +169,25 @@ public class Node implements Serializable,Comparable<Node> {
     }
 
     public void addPacket(Packet packet, Link link) throws BufferLengthException {
+
+        Buffer buffer = outBuffers.get(link);
+
+        if (packet instanceof LSAPacket) {
+            buffer.removeIf(new Predicate<Packet>() {
+                @Override
+                public boolean test(Packet packetInBuffer) {
+                    return (packetInBuffer instanceof LSAPacket) && (packetInBuffer.getId() < packet.getId())
+                            && (packet.getBaseFrom() == packetInBuffer.getBaseFrom());
+                }
+            });
+        }
+
         //Записуємо пакет в вихідний буфер
         if (getFreeBufferPlace(link) >= bufferLength)
             throw new BufferLengthException();
 
-        Buffer buffer = outBuffers.get(link);
-        for(Packet packet1:buffer) {
+
+        for (Packet packet1 : buffer) {
             if (packet1.getId() == packet.getId())
                 return;
         }
@@ -182,7 +197,7 @@ public class Node implements Serializable,Comparable<Node> {
     public int getFreeBufferPlace(Link link) {
         Buffer buffer = outBuffers.get(link);
         if (buffer == null)
-            outBuffers.put(link, new Buffer(link, bufferLength,new PacketComparator()));
+            outBuffers.put(link, new Buffer(link, bufferLength, new PacketComparator()));
         return outBuffers.get(link).size();
     }
 
@@ -288,6 +303,7 @@ public class Node implements Serializable,Comparable<Node> {
 
     /**
      * Вносить дані в таблицю про сусіда(час оновлення)
+     *
      * @param node вузол-сусід
      */
     public void updateNeighbor(Node node) {
@@ -297,23 +313,25 @@ public class Node implements Serializable,Comparable<Node> {
         //додаємо сусіда до даного вузла
         neighbors.put(node, Network.getTime());
         //топологія даного вузла
-        changeTopologyBase(this,getNeighborTable());
+        changeTopologyBase(this, getNeighborTable());
     }
 
     /**
      * Перевіряє зміни в таблиці сусідів і дивиться, чи немає "мертвих" каналів
+     *
      * @return перевірка змін в таблиці
      */
     public boolean checkNeighborTable() {
+        boolean flag = false;
+
         //якщо були зміни в таблиці - відсилаємо
         if (changesNeighborTable) {
             changesNeighborTable = false;
-            return true;
+            flag = true;
         }
-        boolean flag = false;
 
-        for (Iterator<Map.Entry<Node,Long>> it = neighbors.entrySet().iterator(); it.hasNext();) {
-            Map.Entry<Node,Long> entry = it.next();
+        for (Iterator<Map.Entry<Node, Long>> it = neighbors.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<Node, Long> entry = it.next();
             long value = entry.getValue();
             if (Network.getTime() - value > NEIGHBOR_LIVE) {
                 flag = true;
@@ -326,21 +344,22 @@ public class Node implements Serializable,Comparable<Node> {
 
     /**
      * Генерує таблицю сусідів вузла для передачі в LSA
+     *
      * @return таблиця сусідів
      */
-    public HashMap<Node,Integer> getNeighborTable(){
+    public HashMap<Node, Integer> getNeighborTable() {
         if (neighbors.size() == 0)
             return null;
-        HashMap<Node,Integer> neighborTable = new HashMap<>();
-        for(Node node:neighbors.keySet()){
+        HashMap<Node, Integer> neighborTable = new HashMap<>();
+        for (Node node : neighbors.keySet()) {
             int len = getLength(node);
             neighborTable.put(node, len);
         }
         return neighborTable;
     }
 
-    public int getLength(Node node){
-        for(Link link:outBuffers.keySet()){
+    public int getLength(Node node) {
+        for (Link link : outBuffers.keySet()) {
             if (link.getAnotherNode(this) == node)
                 return link.getWeight();
         }
@@ -355,7 +374,7 @@ public class Node implements Serializable,Comparable<Node> {
     }
 
     public void addPerformedPacket(Packet packet) {
-        performed.put(packet.getId(),packet);
+        performed.put(packet.getId(), packet);
     }
 
 
@@ -364,21 +383,21 @@ public class Node implements Serializable,Comparable<Node> {
         if ((baseNode == this) || (performed.get(ID) != null))
             return false;
 
-        changeTopologyBase(baseNode,new HashMap<>(neighbor));
+        changeTopologyBase(baseNode, new HashMap<>(neighbor));
 
         return true;
     }
 
-    public void updateRoutingTable(AlgorithmType algorithmType){
-        routingTable = Dijkstra.leastWeight(this,topologyBase,algorithmType);
+    public void updateRoutingTable(AlgorithmType algorithmType) {
+        routingTable = Dijkstra.leastWeight(this, topologyBase, algorithmType);
     }
 
-    public void changeTopologyBase(Node node, HashMap<Node, Integer> neighbor){
-        topologyBase.put(node,neighbor);
+    public void changeTopologyBase(Node node, HashMap<Node, Integer> neighbor) {
+        topologyBase.put(node, neighbor);
     }
 
-    public boolean isPacketOfBuffer(int packetID,Link link){
-        for(Packet packet:outBuffers.get(link)){
+    public boolean isPacketOfBuffer(int packetID, Link link) {
+        for (Packet packet : outBuffers.get(link)) {
             if (packet.getId() == packetID)
                 return true;
         }
@@ -415,18 +434,18 @@ public class Node implements Serializable,Comparable<Node> {
 
     public Link getLinkForSend(Node to) {
         to = getNextNodeForSend(to);
-        for(Link link:getLinks()){
+        for (Link link : getLinks()) {
             if (link.getAnotherNode(this) == to)
                 return link;
         }
         return null;
     }
 
-    public Node getNextNodeForSend(Node to){
-        if (routingTable!= null){
+    public Node getNextNodeForSend(Node to) {
+        if (routingTable != null) {
             Path path = routingTable.get(to);
-            if (path != null){
-                if (path.path.size()>1)
+            if (path != null) {
+                if (path.path.size() > 1)
                     return path.path.get(1);
             }
         }
@@ -435,16 +454,16 @@ public class Node implements Serializable,Comparable<Node> {
 
     public VirtualConnection createVirtualConnection(Link nextLink) {
         VirtualConnection vt = new VirtualConnection(nextLink);
-        virtualConnections.put(vt.getID(),vt);
+        virtualConnections.put(vt.getID(), vt);
         return vt;
     }
 
     public void addVirtualConnection(VirtualConnection virtualConnection) {
-        virtualConnections.put(virtualConnection.getID(),virtualConnection);
+        virtualConnections.put(virtualConnection.getID(), virtualConnection);
     }
 
     public void addTCPMessages(int virtualConnectionID, ArrayList<Packet> packets) {
-        virtualConnectionsQueue.put(virtualConnectionID,packets);
+        virtualConnectionsQueue.put(virtualConnectionID, packets);
     }
 
     public VirtualConnection getVirtualConnection(int vtID) {
@@ -457,7 +476,7 @@ public class Node implements Serializable,Comparable<Node> {
 
     }
 
-    public void removeVirtualConnectionsQueue(int vtID){
+    public void removeVirtualConnectionsQueue(int vtID) {
         if (virtualConnectionsQueue.get(vtID) != null)
             virtualConnectionsQueue.remove(vtID);
     }
@@ -465,7 +484,6 @@ public class Node implements Serializable,Comparable<Node> {
     public ArrayList<Packet> getVirtualConnectionsQueue(int vtID) {
         return virtualConnectionsQueue.get(vtID);
     }
-
 
 
 }
