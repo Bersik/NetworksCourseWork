@@ -451,9 +451,21 @@ public class Node implements Serializable,Comparable<Node> {
         return virtualConnections.get(vtID);
     }
 
+    public void removeVirtualConnection(int vtID) {
+        if (virtualConnections.get(vtID) != null)
+            virtualConnections.remove(vtID);
+
+    }
+
+    public void removeVirtualConnectionsQueue(int vtID){
+        if (virtualConnectionsQueue.get(vtID) != null)
+            virtualConnectionsQueue.remove(vtID);
+    }
+
     public ArrayList<Packet> getVirtualConnectionsQueue(int vtID) {
         return virtualConnectionsQueue.get(vtID);
     }
+
 
 
 }

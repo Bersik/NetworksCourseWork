@@ -11,9 +11,7 @@ import network.model.packet.accept.AcceptPacket;
 import static settings.Settings.*;
 import static network.algorithm.AlgorithmType.*;
 
-import network.model.packet.tcp.AcceptConnectionTCPPacket;
-import network.model.packet.tcp.ConnectionTCPPacket;
-import network.model.packet.tcp.TCPPacket;
+import network.model.packet.tcp.*;
 import view.Realization;
 
 import javax.swing.*;
@@ -269,16 +267,9 @@ public class Network implements ActionListener {
                 //інакше пересилаємо далі
                 Link nextLink = nodeTo.getLinkForSend(((UDPPacket) packet).getBaseTo());
                 if (nextLink != null) {
-                    packet.setFrom(nodeTo);
-                    packet.setTo(nextLink.getAnotherNode(nodeTo));
-                    packet.setLink(nextLink);
-                    packet.setPosition(0);
-                    try {
-                        nodeTo.addPacket(packet, nextLink);
+
+                    if (sendNext(nextLink, packet, nodeTo))
                         nodeTo.addConfirmPacket(packet);
-                    } catch (BufferLengthException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
             if (acceptUDP) {
@@ -408,37 +399,143 @@ public class Network implements ActionListener {
             }
         }
 
-        //Якщо прийшло підтвердження встановлення з'єднання
+        //Якщо прийшов TCP пакет
         if (packet instanceof TCPPacket) {
 
             TCPPacket TCPPacket = (TCPPacket) packet;
-
 
             //якщо кінцева - додаємо до виконаних
             if (TCPPacket.getBaseTo() == nodeTo) {
                 nodeTo.addPerformedPacket(packet);
 
+                int vtID = TCPPacket.getVirtualConnectionID();
+                VirtualConnection vt = new VirtualConnection(vtID, link, null);
+
+                //посилаємо підтвердження
+                Link departureLink = vt.getPrevLink();
+                Packet departurePacket = new AcceptTCPPacket(nodeTo,
+                        TCPPacket.getBaseFrom(), departureLink, packet.getId(), vtID);
+                //Додаємо пакет
+                try {
+                    //в той самий канал відправляємо підтвердження
+                    nodeTo.addPacket(departurePacket, departureLink);
+                } catch (BufferLengthException e) {
+                    System.out.println("Переповнення вихідного буферу");
+                }
 
             } else {
                 //інакше пересилаємо далі
                 VirtualConnection vt = nodeTo.getVirtualConnection(TCPPacket.getVirtualConnectionID());
                 Link nextLink = vt.getNextLink();
                 if (nextLink != null) {
-                    packet.setFrom(nodeTo);
-                    packet.setTo(nextLink.getAnotherNode(nodeTo));
-                    packet.setLink(nextLink);
-                    packet.setPosition(0);
-                    try {
-                        nodeTo.addPacket(packet, nextLink);
-                    } catch (BufferLengthException e) {
-                        e.printStackTrace();
-                    }
+                    sendNext(nextLink, packet, nodeTo);
+                }
+            }
+        }
+
+        /**
+         * якщо прийшло підтвердження TCP пакету
+         */
+        if (packet instanceof AcceptTCPPacket) {
+            //якщо кінцева - додаємо до виконаних
+            AcceptTCPPacket conPacket = (AcceptTCPPacket) packet;
+            if (conPacket.getBaseTo() == nodeTo) {
+                nodeTo.addPerformedPacket(packet);
+
+                //Підтверджуємо пакет
+                nodeTo.confirmPacket(conPacket.getIdOriginalPacket());
+
+            } else {
+                //інакше пересилаємо далі
+                VirtualConnection vt = nodeTo.getVirtualConnection(conPacket.getVirtualConnectionID());
+                Link nextLink = vt.getPrevLink();
+                if (nextLink != null) {
+                    sendNext(nextLink, packet, nodeTo);
+                }
+            }
+        }
+
+        /**
+         * якщо прийшов запит на закриття віртуального каналу
+         */
+        if (packet instanceof DisconnectionTCPPacket) {
+            //якщо кінцева - додаємо до виконаних
+            DisconnectionTCPPacket discPacket = (DisconnectionTCPPacket) packet;
+            if (discPacket.getBaseTo() == nodeTo) {
+                nodeTo.addPerformedPacket(packet);
+
+                //Генеруємо відповідь
+                int vtID = discPacket.getVirtualConnectionID();
+                VirtualConnection vt = new VirtualConnection(vtID, link, null);
+                nodeTo.removeVirtualConnection(vtID);
+
+                //посилаємо підтвердження
+                Link departureLink = vt.getPrevLink();
+                Packet departurePacket = new AcceptDisconnectTCPPacket(nodeTo,
+                        discPacket.getBaseFrom(), departureLink, packet.getId(), vtID);
+                //Додаємо пакет
+                try {
+                    //в той самий канал відправляємо підтвердження
+                    nodeTo.addPacket(departurePacket, departureLink);
+                } catch (BufferLengthException e) {
+                    System.out.println("Переповнення вихідного буферу");
+                }
+            } else {
+                //інакше пересилаємо далі
+                VirtualConnection vt = nodeTo.getVirtualConnection(discPacket.getVirtualConnectionID());
+                Link nextLink = vt.getNextLink();
+                if (nextLink != null) {
+
+                    sendNext(nextLink, packet, nodeTo);
+
+                }
+            }
+        }
+        /**
+         * ідемо і по черзі закриваємо канали на кожному вузлі
+         */
+        if (packet instanceof AcceptDisconnectTCPPacket) {
+
+            AcceptDisconnectTCPPacket discPacket = (AcceptDisconnectTCPPacket) packet;
+            //якщо кінцева - додаємо до виконаних
+            if (discPacket.getBaseTo() == nodeTo) {
+                nodeTo.addPerformedPacket(packet);
+
+                //видаляємо
+                int vtID = discPacket.getVirtualConnectionID();
+                nodeTo.removeVirtualConnection(vtID);
+                nodeTo.removeVirtualConnectionsQueue(vtID);
+
+            } else {
+                //інакше пересилаємо далі
+                VirtualConnection vt = nodeTo.getVirtualConnection(discPacket.getVirtualConnectionID());
+                Link nextLink = vt.getPrevLink();
+                nodeTo.removeVirtualConnection(vt.getID());
+                if (nextLink != null) {
+                    sendNext(nextLink, packet, nodeTo);
                 }
             }
         }
 
         //видаляємо пакет з каналу
         link.removePacket(packet);
+        return true;
+    }
+
+
+    private boolean sendNext(Link nextLink, Packet packet, Node node) {
+        packet.setFrom(node);
+        packet.setTo(nextLink.getAnotherNode(node));
+        packet.setLink(nextLink);
+        packet.setPosition(0);
+
+        try {
+            node.addPacket(packet, nextLink);
+            node.addConfirmPacket(packet);
+        } catch (BufferLengthException e) {
+            e.printStackTrace();
+            return false;
+        }
         return true;
     }
 
@@ -581,8 +678,11 @@ public class Network implements ActionListener {
                     packets.add(new TCPPacket(from, to, link, packetSize, i, count, virtualConnectionID));
                 int size$ = count * packetSize;
                 packets.add(new TCPPacket(from, to, link, size - size$, count, count, virtualConnectionID));
+
             }
         }
+        //пакет відключення
+        packets.add(new DisconnectionTCPPacket(from, to, link, virtualConnectionID));
 
         from.addTCPMessages(virtualConnectionID, packets);
 
