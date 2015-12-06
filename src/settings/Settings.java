@@ -62,13 +62,20 @@ public class Settings {
 
     //---------Communication
     //час оновлення сусідів
-    public static final int UPDATE_NEIGHBOR = 4000;
+    public static final int UPDATE_NEIGHBOR = 2000;
     //скільки часу сусід буде рахуватись підключеним, після прийому від нього HELLO пакету
     public static final int NEIGHBOR_LIVE = UPDATE_NEIGHBOR*2;
     //Максимальна кількість пакетів в каналі в одиницю часу
     public static final int MAX_PACKETS_IN_LINK = 20;
     //Після скількох пакетів відбується переключення напівдуплексу
     public static final int COUNT_CHANGE_DIRECTION_HALF_DUPLEX = 20;
+    //Як часто будуть розсилатись LSA пакети при змінах
+    public static final int UPDATE_LSA = 100;
+
+    //--------Генератор
+    public static final double FREQUENCY= 0.1;
+    public static final int MESSAGE_SIZE_FROM = 2000;
+    public static final int MESSAGE_SIZE_TO = 5000;
 
     //максимальний розмір пакету
     public static final int DEFAULT_MAX_PACKET_SIZE = 512;

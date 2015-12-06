@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created on 15:15 30.11.2015
@@ -48,6 +49,12 @@ public class Network implements ActionListener {
 
     private boolean acceptUDP = true;
 
+    private boolean generation = false;
+    private int minMessageSize;
+    private int maxMessageSize;
+    private double frequency;
+    private Random random;
+
 
     public Network(Realization frame, ArrayList<Node> nodes, ArrayList<Link> links, int delay) {
         //Ініціалізація списку вузлів і каналів
@@ -56,9 +63,12 @@ public class Network implements ActionListener {
         this.links = links;
         this.delay = delay;
 
-        packetSize = DEFAULT_MAX_PACKET_SIZE;
         time = 0;
+
+        packetSize = DEFAULT_MAX_PACKET_SIZE;
         algorithmType = SHORTEST_DISTANCE;
+
+        random = new Random();
     }
 
 
@@ -142,19 +152,25 @@ public class Network implements ActionListener {
             }
         }
 
+
+        /**
+         * Зробимо кожних 10 мілісекунд
+         */
         /*
         Перевіряємо наявність змін у таблиці сусідів
         Якщо є зміни, розсилаємо таблицю сусідів сусідам
          */
-        for (Node node : nodes) {
-            //якщо є зміни, розсилаємо нову таблицю
-            if (node.checkNeighborTable()) {
+        if (time % UPDATE_LSA == 0)
+            for (Node node : nodes) {
+                //якщо є зміни, розсилаємо нову таблицю
+                if (node.checkNeighborTable()) {
 
-
-                //TODO відсилаємо не всім, а лиш тим,
-                sendLSA(node);
+                    sendLSA(node);
+                }
             }
-        }
+
+        if (generation)
+            generate();
 
         /*
         Відправка пакетів
@@ -172,6 +188,7 @@ public class Network implements ActionListener {
      * 0. Проходимо по всім пакетам, і додаємо їхню позицію(час) на 1(пакети в каналах і в вихідних буферах).
      * Якщо позиція >= довжині каналу, то говоримо, що пакет дійшов (обробляємо пакет формуємо підтверження).
      */
+
     private void stepPackets() {
         //спочатку всі пакети, що в каналах
         for (Link link : links) {
@@ -522,6 +539,27 @@ public class Network implements ActionListener {
         return true;
     }
 
+    private void generate(){
+        for(Node from:nodes){
+            if (random.nextDouble() <= frequency){
+                Node to;
+                while(true){
+                    to = nodes.get(random.nextInt(nodes.size()));
+                    if (from != to)
+                        break;
+                }
+                int size = minMessageSize + random.nextInt(maxMessageSize-minMessageSize);
+                try {
+                    if (random.nextDouble() <= 0.5)
+                        sendUDPMessage(from, to, size);
+                    else
+                        sendTCPMessage(from, to, size);
+                }catch (BufferLengthException be){
+                    be.printStackTrace();
+                }
+            }
+        }
+    }
 
     private boolean sendNext(Link nextLink, Packet packet, Node node) {
         packet.setFrom(node);
@@ -705,5 +743,16 @@ public class Network implements ActionListener {
 
     public void setAlgorithmType(AlgorithmType algorithmType) {
         this.algorithmType = algorithmType;
+    }
+
+    public void startGeneration(double frequency,int minSize,int maxSize) {
+        generation = true;
+        this.frequency = frequency;
+        this.minMessageSize = minSize;
+        this.maxMessageSize = maxSize;
+    }
+
+    public void stopGeneration() {
+        generation = false;
     }
 }

@@ -7,6 +7,7 @@ import network.*;
 import network.algorithm.AlgorithmType;
 import network.exception.BufferLengthException;
 import network.model.Network;
+import settings.Settings;
 import util.ErrorDialog;
 import view.form.CreateNetworkDialog2;
 import view.form.MainWindow;
@@ -15,6 +16,8 @@ import view.form.information.LinkInformation;
 import view.form.information.NodeInformation;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -25,6 +28,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Random;
@@ -145,6 +149,16 @@ public class Realization extends MainWindow {
 
         //ініціалізацію управління швидкістю
         sliderSpeed.addChangeListener(new SliderSpeedChangeListener());
+
+        timeLabel.setText("0");
+
+        frequencyTextField.setText(Double.toString(FREQUENCY));
+
+        generatorCheckBox.addActionListener(new GeneratorCheckBoxActionListener());
+
+        enableComponents(typeRouting,false);
+        enableComponents(messagesPanel,false);
+        tabbedPane1.addChangeListener(new ChangeTablePaneListener());
 
         //По замовчуванню, спочатку просто оброблюємо натиски на різні вузли і канали
         changeState(State.CURSOR);
@@ -543,6 +557,7 @@ public class Realization extends MainWindow {
         redrawAll();
         if (informationFrame != null)
             informationFrame.update();
+        timeLabel.setText(Long.toString(Network.getTime()));
 
     }
 
@@ -622,18 +637,24 @@ public class Realization extends MainWindow {
                 pauseButton.setEnabled(true);
                 stepButton.setEnabled(true);
                 stateStart = false;
-                network.setPacketSize((Integer)packetSizeTextField1.getValue());
+                network.setPacketSize((Integer) packetSizeTextField1.getValue());
                 if (shortestDistanceRadioButton.isSelected())
                     network.setAlgorithmType(AlgorithmType.SHORTEST_DISTANCE);
                 else
                     network.setAlgorithmType(AlgorithmType.SHOTEST_TRANSIT);
                 network.startTimer();
+                enableComponents(typeRouting,false);
+                tabbedPane1.setEnabled(false);
+                enableComponents(messagesPanel,true);
             } else {
                 startStopButton.setText(startStr);
                 pauseButton.setEnabled(false);
                 stepButton.setEnabled(false);
                 stateStart = true;
                 network.stopTimer();
+                enableComponents(typeRouting,true);
+                tabbedPane1.setEnabled(true);
+                enableComponents(messagesPanel,false);
             }
         }
     }
@@ -1029,7 +1050,7 @@ public class Realization extends MainWindow {
                 try {
                     FileWorks.writeToFile(file, new NetworkSerialization(links, nodes));
                 } catch (IOException e1) {
-                    ErrorDialog.showErrorDialog(Realization.this,"Не вдалося зберегти файл.");
+                    ErrorDialog.showErrorDialog(Realization.this, "Не вдалося зберегти файл.");
                 }
             }
         }
@@ -1054,7 +1075,7 @@ public class Realization extends MainWindow {
                     Node.reset(nodes.size());
                     redrawAll();
                 } catch (IOException | ClassNotFoundException e1) {
-                    ErrorDialog.showErrorDialog(Realization.this,"Не вдалося завантажити мережу з файлу.");
+                    ErrorDialog.showErrorDialog(Realization.this, "Не вдалося завантажити мережу з файлу.");
                 }
             }
         }
@@ -1083,18 +1104,18 @@ public class Realization extends MainWindow {
             if (network != null) {
                 Node from = findNodeByID(nodeFromComboBox.getItemAt(nodeFromComboBox.getSelectedIndex()));
                 Node to = findNodeByID(nodeFromComboBox.getItemAt(nodeToComboBox.getSelectedIndex()));
-                int size = ((Number)messageSizeTextField.getValue()).intValue();
+                int size = ((Number) messageSizeTextField.getValue()).intValue();
                 MessageType messageType = MessageType.UDP;
                 if (TCPRadioButton.isSelected())
                     messageType = MessageType.TCP;
-                if (from != null && to != null && from != to){
-                    try{
-                        network.sendMessage(from,to,size,messageType);
-                    }catch (BufferLengthException be){
-                        ErrorDialog.showErrorDialog(Realization.this,"Буфер переповнений.");
+                if (from != null && to != null && from != to) {
+                    try {
+                        network.sendMessage(from, to, size, messageType);
+                    } catch (BufferLengthException be) {
+                        ErrorDialog.showErrorDialog(Realization.this, "Буфер переповнений.");
                     }
-                }else
-                    ErrorDialog.showErrorDialog(Realization.this,"Вибрані невірні параметри відправки повідомлення.");
+                } else
+                    ErrorDialog.showErrorDialog(Realization.this, "Вибрані невірні параметри відправки повідомлення.");
 
             }
         }
@@ -1103,13 +1124,18 @@ public class Realization extends MainWindow {
     protected void createUIComponents() {
         super.createUIComponents();
         NumberFormat numericFormat = NumberFormat.getNumberInstance();
-        numericFormat.setMaximumIntegerDigits(5);
+        numericFormat.setMaximumIntegerDigits(6);
         numericFormat.setMinimumIntegerDigits(1);
         messageSizeTextField = new JFormattedTextField(numericFormat);
         messageSizeTextField.setValue(DEFAULT_MESSAGE_SIZE);
 
         packetSizeTextField1 = new JFormattedTextField(numericFormat);
         packetSizeTextField1.setValue(DEFAULT_MAX_PACKET_SIZE);
+
+        messagesSizeFrom = new JFormattedTextField(numericFormat);
+        messagesSizeFrom.setValue(MESSAGE_SIZE_FROM);
+        messagesSizeTo = new JFormattedTextField(numericFormat);
+        messagesSizeTo.setValue(MESSAGE_SIZE_TO);
     }
 
 
@@ -1129,4 +1155,42 @@ public class Realization extends MainWindow {
         }
     }
 
+    private class GeneratorCheckBoxActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (network != null) {
+                if (generatorCheckBox.isSelected()) {
+                    double frequency;
+                    int minSize;
+                    int maxSize;
+                    try {
+                        frequency = Double.parseDouble(frequencyTextField.getText());
+                        minSize = ((Number) messagesSizeFrom.getValue()).intValue();
+                        maxSize = ((Number) messagesSizeTo.getValue()).intValue();
+                        if (minSize > maxSize)
+                            throw new InvalidParameterException();
+                    } catch (Exception nfe) {
+                        ErrorDialog.showErrorDialog(Realization.this, "Вказані дані невірні");
+                        generatorCheckBox.setSelected(false);
+                        return;
+                    }
+                    network.startGeneration(frequency, minSize, maxSize);
+                    enableComponents(generatorPanel,false);
+                } else {
+                    enableComponents(generatorPanel,true);
+                    network.stopGeneration();
+                }
+            }
+
+        }
+    }
+
+    private class ChangeTablePaneListener implements ChangeListener {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            if (tabbedPane1.getSelectedIndex()==1){
+                changeState(State.CURSOR);
+            }
+        }
+    }
 }

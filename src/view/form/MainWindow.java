@@ -45,7 +45,7 @@ public class MainWindow extends JFrame {
     protected JSlider sliderSpeed;
     protected JRadioButton shortestTransitRadioButton;
     protected JRadioButton shortestDistanceRadioButton;
-    protected JCheckBox генераціяCheckBox;
+    protected JCheckBox generatorCheckBox;
     protected JButton startStopButton;
     protected JButton pauseButton;
     protected JButton stepButton;
@@ -56,6 +56,13 @@ public class MainWindow extends JFrame {
     protected JButton sendMessageButton;
     protected JFormattedTextField packetSizeTextField1;
     protected JFormattedTextField messageSizeTextField;
+    protected JLabel timeLabel;
+    protected JTextField frequencyTextField;
+    protected JFormattedTextField messagesSizeFrom;
+    protected JFormattedTextField messagesSizeTo;
+    protected JPanel generatorPanel;
+    protected JPanel typeRouting;
+    protected JPanel messagesPanel;
 
     protected void groupRadioButtons() {
         communicationMethod.add(buttonDuplex);

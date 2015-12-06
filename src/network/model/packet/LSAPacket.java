@@ -12,7 +12,6 @@ import java.util.HashMap;
  *
  * @author Bersik
  */
-
 public class LSAPacket extends Packet{
     private static final int SIZE = 100;
     //Сусіди (сусід, відстань до сусіда)
