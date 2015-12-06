@@ -20,7 +20,8 @@ public class Buffer extends PriorityQueue<Packet>  implements Serializable {
     //канал, з яким зв'язаний буфер
     private Link link;
 
-    public Buffer(Link link,int bufferLength){
+    public Buffer(Link link,int bufferLength,Comparator<Packet> comparator){
+        super(comparator);
         this.link = link;
         this.bufferLength = bufferLength;
     }

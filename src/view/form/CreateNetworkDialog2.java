@@ -3,6 +3,7 @@ package view.form;
 import network.GeneratorNetwork;
 import network.Link;
 import network.Node;
+import util.ErrorDialog;
 import view.Realization;
 
 import javax.swing.*;
@@ -71,24 +72,70 @@ public class CreateNetworkDialog2 extends JDialog {
         buttonOK.requestFocus();
     }
 
-    public static GeneratorNetwork showDialog(Realization frame){
+    public static GeneratorNetwork showDialog(Realization frame) {
         CreateNetworkDialog2 dialog = new CreateNetworkDialog2(frame);
         dialog.launch();
         return dialog.getGeneratorNetwork();
     }
 
+    private boolean checkList(String text) {
+        String regex = "(\\d+[ ]*)+";
+        return text.matches(regex);
+    }
+
+    private boolean checkAll(int countCommutationNodesValue, int countSatelliteLinksValue, int degreeNetworkValue) {
+
+        if (degreeNetworkValue >= countCommutationNodesValue - 1)
+            return false;
+        if (degreeNetworkValue * countCommutationNodesValue < countSatelliteLinksValue - 1)
+            return false;
+        if (listRadioButton.isSelected()) {
+            if (!checkList(rangeTextField.getText()))
+                return false;
+        } else if (Integer.parseInt(fromTextField.getText()) > Integer.parseInt(toTextField.getText()))
+            return false;
+
+        if (listLengthLinkRadioButton.isSelected()) {
+            if (!checkList(rangeLengthLinkTextField.getText()))
+                return false;
+        } else if (Integer.parseInt(fromLengthTextField.getText()) > Integer.parseInt(toLengthTextField.getText()))
+            return false;
+
+
+        return true;
+    }
+
+    private void showErrorDialog() {
+        JOptionPane.showMessageDialog(this,
+                "Введені помилкові дані.", "Помилка", JOptionPane.ERROR_MESSAGE);
+    }
+
     private void onOK() {
+        int countCommutationNodesValue;
+        int countSatelliteLinksValue;
+        int degreeNetworkValue;
+        int[] weights;
+        int[] bufferLengths;
+        try {
+            countCommutationNodesValue = Integer.parseInt(countCommutationNodes.getText());
+            countSatelliteLinksValue = Integer.parseInt(countSatelliteLinks.getText());
+            degreeNetworkValue = Integer.parseInt(degreeNetwork.getText());
+
+            if (!checkAll(countCommutationNodesValue, countSatelliteLinksValue, degreeNetworkValue))
+                throw new Exception();
+
+            weights = getWeight();
+
+            bufferLengths = getBufferLengths();
+
+        } catch (Exception e) {
+            ErrorDialog.showErrorDialog(this,"Введені помилкові дані.");
+            return;
+        }
+
         Node.reset();
 
-        int countCommutationNodesValue = Integer.parseInt(countCommutationNodes.getText());
-        int countSatelliteLinksValue = Integer.parseInt(countSatelliteLinks.getText());
-        int degreeNetworkValue = Integer.parseInt(degreeNetwork.getText());
-
         Dimension dimension = frame.getImageSize();
-
-        int[] weights = getWeight();
-
-        int[] bufferLengths = getBufferLengths();
 
         generatorNetwork = new GeneratorNetwork(dimension, countCommutationNodesValue, countSatelliteLinksValue,
                 degreeNetworkValue, weights, bufferLengths);
@@ -187,6 +234,8 @@ public class CreateNetworkDialog2 extends JDialog {
 
     private void createUIComponents() {
         NumberFormat amountFormat = NumberFormat.getNumberInstance();
+        amountFormat.setMinimumIntegerDigits(1);
+        amountFormat.setMaximumIntegerDigits(5);
 
         countCommutationNodes = new JFormattedTextField(amountFormat);
         countCommutationNodes.setText(Integer.toString(COUNT_COMMUTATION_NODES));

@@ -81,15 +81,7 @@ public class NodeInformation extends InformationFrame {
         activeCheckBox.setSelected(node.isActive());
         bufferSizeFormattedTextField.setText(Integer.toString(node.getBufferLength()));
 
-        linksTable.setModel(new LinksTableModel(node.getLinks()));
-        LinksTableModel.setColumnsWidth(linksTable);
-
-        linksTable.setFillsViewportHeight(true);
-        loadBuffers();
-
-        neighborsTable.setModel(new NeighborTable(node.getNeighbors()));
-        topologyBaseTable.setModel(new TopologyBaseTable(node));
-        TopologyBaseTable.setColumnsWidth(topologyBaseTable);
+        update();
     }
 
     @Override
@@ -103,8 +95,15 @@ public class NodeInformation extends InformationFrame {
     @Override
     public void update() {
         loadBuffers();
+
+        linksTable.setModel(new LinksTableModel(node));
+        LinksTableModel.setColumnsWidth(linksTable);
         neighborsTable.setModel(new NeighborTable(node.getNeighbors()));
+        NeighborTable.setColumnsWidth(neighborsTable);
         topologyBaseTable.setModel(new TopologyBaseTable(node));
+        TopologyBaseTable.setColumnsWidth(topologyBaseTable);
+        communicationTable.setModel(new RoutingTable(node.getRoutingTable()));
+        RoutingTable.setColumnsWidth(communicationTable);
     }
 
     public void loadBuffers(){

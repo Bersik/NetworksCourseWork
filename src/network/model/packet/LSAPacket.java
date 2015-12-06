@@ -16,26 +16,18 @@ import java.util.HashMap;
 public class LSAPacket extends Packet{
     private static final int SIZE = 100;
     //Сусіди (сусід, відстань до сусіда)
-    private Node baseNode;
     private HashMap<Node,Integer> neighbor;
 
     //Транзитне створення пакету
     public LSAPacket(Node from, Node to, Link link,Node baseNode,int ID) {
         super(from, to, link, SIZE, PacketPriority.HIGH,ID);
-        this.baseNode = baseNode;
-        neighbor = baseNode.getNeighborTable();
+        this.baseFrom = baseNode;
+        this.neighbor = new HashMap<>(baseNode.getNeighborTable());
     }
 
     //Початкове створення пакету
     public LSAPacket(Node from, Node to, Link link) {
-        super(from,to,link,SIZE,PacketPriority.HIGH);
-        baseNode = from;
-        neighbor = baseNode.getNeighborTable();
-    }
-
-    //Початкове створення пакету
-    public LSAPacket(Node from, Node to, Link link,int ID) {
-        this(from,to,link,from,ID);
+        this(from,to,link,from,nextId++);
     }
 
     public HashMap<Node, Integer> getNeighbor() {
@@ -43,7 +35,7 @@ public class LSAPacket extends Packet{
     }
 
     public Node getBaseNode() {
-        return baseNode;
+        return baseFrom;
     }
 
 }

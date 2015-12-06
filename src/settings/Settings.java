@@ -71,13 +71,16 @@ public class Settings {
     public static final int COUNT_CHANGE_DIRECTION_HALF_DUPLEX = 5;
 
     //максимальний розмір пакету
-    public static final int MAX_PACKET_SIZE = 512;
+    public static final int DEFAULT_MAX_PACKET_SIZE = 512;
+    public static final int DEFAULT_MESSAGE_SIZE = 1024;
 
 
     public static final Color PACKET_COLOR = Color.decode("#F6D779");
     public static final Color PACKET_COLOR_HELLO = Color.decode("#F6D779");
     public static final Color PACKET_COLOR_LSA = Color.decode("#7992F6");
     public static final Color PACKET_COLOR_ACCEPT = Color.decode("#79F683");
+    public static final Color PACKET_COLOR_UDP = Color.decode("#1894FF");
+    public static final Color PACKET_COLOR_TCP = Color.decode("#FF6918");
 
     public static final int DELAY_MAX = 1000;
     public static final int DELAY_MIN = 10;

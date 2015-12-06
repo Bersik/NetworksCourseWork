@@ -21,11 +21,11 @@ public class AcceptPacket extends Packet {
      * @param from
      * @param to
      * @param link
-     * @param id номер пакета, який підтверджуємо
+     * @param idOriginalPacket номер пакета, який підтверджуємо
      */
-    public AcceptPacket(Node from, Node to, Link link, int id) {
+    public AcceptPacket(Node from, Node to, Link link, int idOriginalPacket) {
         super(from, to, link,SIZE, PacketPriority.HIGH);
-        idOriginalPacket = id;
+        this.idOriginalPacket = idOriginalPacket;
 
     }
 

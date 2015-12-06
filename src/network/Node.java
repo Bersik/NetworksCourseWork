@@ -1,9 +1,14 @@
 package network;
 
+import network.algorithm.AlgorithmType;
+import network.algorithm.Dijkstra;
+import network.algorithm.Path;
 import network.exception.BufferLengthException;
 import network.model.Buffer;
 import network.model.Network;
+import network.model.VirtualConnection;
 import network.model.packet.Packet;
+import network.model.packet.PacketComparator;
 import network.model.packet.table.TopologyBase;
 
 import java.awt.*;
@@ -17,7 +22,7 @@ import static settings.Settings.*;
  *
  * @author Bersik
  */
-public class Node implements Serializable {
+public class Node implements Serializable,Comparable<Node> {
     //номер наступного вузла
     private static int nextId = 0;
 
@@ -55,6 +60,14 @@ public class Node implements Serializable {
     //топологічна база
     private TopologyBase topologyBase;
 
+    //таблиця маршрутизації
+    private HashMap<Node,Path> routingTable;
+
+    //віртульані канали
+    private HashMap<Integer,VirtualConnection> virtualConnections;
+
+    //список пакетів, прив'язаних до віртуальних каналів
+    private HashMap<Integer,ArrayList<Packet>> virtualConnectionsQueue;
 
     public Node(Point point, int bufferLength) {
         this.position = point;
@@ -67,6 +80,9 @@ public class Node implements Serializable {
         neighbors = new HashMap<>();
         performed = new HashMap<>();
         topologyBase = new TopologyBase();
+        routingTable = new HashMap<>();
+        virtualConnections = new HashMap<>();
+        virtualConnectionsQueue = new HashMap<>();
     }
 
     public static void reset() {
@@ -116,7 +132,7 @@ public class Node implements Serializable {
     }
 
     public void addLink(Link link) {
-        outBuffers.put(link, new Buffer(link, bufferLength));
+        outBuffers.put(link, new Buffer(link, bufferLength,new PacketComparator()));
     }
 
     public ArrayList<Link> getLinks() {
@@ -150,11 +166,6 @@ public class Node implements Serializable {
         return bufferLength;
     }
 
-    public void setBufferLength(int bufferLength) {
-        this.bufferLength = bufferLength;
-    }
-
-
     public void addPacket(Packet packet, Link link) throws BufferLengthException {
         //Записуємо пакет в вихідний буфер
         if (getFreeBufferPlace(link) >= bufferLength)
@@ -171,7 +182,7 @@ public class Node implements Serializable {
     public int getFreeBufferPlace(Link link) {
         Buffer buffer = outBuffers.get(link);
         if (buffer == null)
-            outBuffers.put(link, new Buffer(link, bufferLength));
+            outBuffers.put(link, new Buffer(link, bufferLength,new PacketComparator()));
         return outBuffers.get(link).size();
     }
 
@@ -235,13 +246,15 @@ public class Node implements Serializable {
                     if (link.getLinkType() == LinkType.HALF_DUPLEX) {
 
                         //1. в канал передано достатьно пакетів, потрібно змінити напрям
-                        if ((link.getOverallCountPackets() >= COUNT_CHANGE_DIRECTION_HALF_DUPLEX)
-                                && (link.countPackets() == 0)) {
-                            link.setOverallCountPackets(0);
-                            //Змінюємо напрям
-                            link.setTransmitter(link.getAnotherNode(link.getTransmitter()));
+                        if (link.getOverallCountPackets() >= COUNT_CHANGE_DIRECTION_HALF_DUPLEX) {
+                            if (link.countPackets() != 0)
+                                return;
+                            else {
+                                link.setOverallCountPackets(0);
+                                //Змінюємо напрям
+                                link.setTransmitter(link.getAnotherNode(link.getTransmitter()));
+                            }
                         }
-
 
                         Node transmitter = buffer.peek().getFrom();
                         //Якщо напрям передачі такий, який зараз треба
@@ -284,12 +297,12 @@ public class Node implements Serializable {
         //додаємо сусіда до даного вузла
         neighbors.put(node, Network.getTime());
         //топологія даного вузла
-        topologyBase.put(this,getNeighborTable());
+        changeTopologyBase(this,getNeighborTable());
     }
 
     /**
      * Перевіряє зміни в таблиці сусідів і дивиться, чи немає "мертвих" каналів
-     * @return
+     * @return перевірка змін в таблиці
      */
     public boolean checkNeighborTable() {
         //якщо були зміни в таблиці - відсилаємо
@@ -305,7 +318,6 @@ public class Node implements Serializable {
             if (Network.getTime() - value > NEIGHBOR_LIVE) {
                 flag = true;
                 it.remove();
-
             }
         }
 
@@ -352,10 +364,17 @@ public class Node implements Serializable {
         if ((baseNode == this) || (performed.get(ID) != null))
             return false;
 
-        topologyBase.put(baseNode,neighbor);
-        //TODO перероблюємо дерево тут
+        changeTopologyBase(baseNode,new HashMap<>(neighbor));
 
         return true;
+    }
+
+    public void updateRoutingTable(AlgorithmType algorithmType){
+        routingTable = Dijkstra.leastWeight(this,topologyBase,algorithmType);
+    }
+
+    public void changeTopologyBase(Node node, HashMap<Node, Integer> neighbor){
+        topologyBase.put(node,neighbor);
     }
 
     public boolean isPacketOfBuffer(int packetID,Link link){
@@ -376,40 +395,64 @@ public class Node implements Serializable {
     public HashMap<Node, Long> getNeighbors() {
         return neighbors;
     }
-/*
-    public int[][] topologyBaseIntegers(){
-        Set<Integer> fromNodes =
-        ArrayList<Integer> fromNodes = new ArrayList<>(topologyBase.keySet());
-        Collections.sort(fromNodes);
-
-        Set<Integer> toNodes
-
-        ArrayList<Integer> toNodes = new ArrayList<>(topologyBase.keySet());
-
-
-        int[][] base = new int[topologyBase.size()+1][];
-
-        for(int[] arr:base)
-            arr = new int[topologyBase.size()];
-
-        for(Node firstNode:topologyBase.keySet()){
-            HashMap<Node,Integer> map = topologyBase.get(firstNode);
-            int firstNodeID = firstNode.getId();
-            for(Node secondNode:topologyBase.get(firstNode).keySet()){
-                int secondNodeID = secondNode.getId();
-                base[firstNodeID][secondNodeID] = map.get(secondNode);
-            }
-        }
-
-
-
-
-        return base;
-    }
-*/
 
     public TopologyBase getTopologyBase() {
         return topologyBase;
+    }
+
+    @Override
+    public int compareTo(Node o) {
+        if (id < o.id)
+            return -1;
+        if (id > o.id)
+            return 1;
+        return 0;
+    }
+
+    public HashMap<Node, Path> getRoutingTable() {
+        return routingTable;
+    }
+
+    public Link getLinkForSend(Node to) {
+        to = getNextNodeForSend(to);
+        for(Link link:getLinks()){
+            if (link.getAnotherNode(this) == to)
+                return link;
+        }
+        return null;
+    }
+
+    public Node getNextNodeForSend(Node to){
+        if (routingTable!= null){
+            Path path = routingTable.get(to);
+            if (path != null){
+                if (path.path.size()>1)
+                    return path.path.get(1);
+            }
+        }
+        return null;
+    }
+
+    public VirtualConnection createVirtualConnection(Link nextLink) {
+        VirtualConnection vt = new VirtualConnection(nextLink);
+        virtualConnections.put(vt.getID(),vt);
+        return vt;
+    }
+
+    public void addVirtualConnection(VirtualConnection virtualConnection) {
+        virtualConnections.put(virtualConnection.getID(),virtualConnection);
+    }
+
+    public void addTCPMessages(int virtualConnectionID, ArrayList<Packet> packets) {
+        virtualConnectionsQueue.put(virtualConnectionID,packets);
+    }
+
+    public VirtualConnection getVirtualConnection(int vtID) {
+        return virtualConnections.get(vtID);
+    }
+
+    public ArrayList<Packet> getVirtualConnectionsQueue(int vtID) {
+        return virtualConnectionsQueue.get(vtID);
     }
 
 

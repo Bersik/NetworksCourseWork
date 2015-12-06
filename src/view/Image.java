@@ -7,7 +7,9 @@ import network.Node;
 import network.model.packet.HelloPacket;
 import network.model.packet.LSAPacket;
 import network.model.packet.Packet;
+import network.model.packet.UDPPacket;
 import network.model.packet.accept.AcceptPacket;
+import network.model.packet.tcp.TCPPacket;
 
 import javax.swing.*;
 import java.awt.*;
@@ -190,6 +192,10 @@ public class Image extends JPanel {
                 graphics.setColor(PACKET_COLOR_LSA);
             else if (packet instanceof AcceptPacket)
                 graphics.setColor(PACKET_COLOR_ACCEPT);
+            else if (packet instanceof UDPPacket)
+                graphics.setColor(PACKET_COLOR_UDP);
+            else if (packet instanceof TCPPacket)
+                graphics.setColor(PACKET_COLOR_TCP);
             graphics.fillRect(coord.x, coord.y, 40, 20);
             graphics.setColor(DEFAULT_COLOR);
             graphics.drawRect(coord.x, coord.y, 40, 20);

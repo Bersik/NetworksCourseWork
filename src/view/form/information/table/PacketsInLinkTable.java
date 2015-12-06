@@ -88,9 +88,8 @@ public class PacketsInLinkTable extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths[] = {50,50,50,80,60,70,70};
+        final int widths[] = {50,50,50,80,60,70,table.getWidth()-360};
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        JTableHeader th = table.getTableHeader();
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 

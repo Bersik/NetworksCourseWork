@@ -1,30 +1,32 @@
 package view.form.information.table;
 
-import network.Link;
 import network.Node;
+import network.algorithm.Path;
+import network.model.packet.table.TopologyBase;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
-import java.util.List;
+import java.util.*;
 
 /**
- * Created on 0:05 30.11.2015
+ * Created on 23:30 05.12.2015
  *
  * @author Bersik
  */
-public class LinksTableModel extends AbstractTableModel {
 
-    private final String[] columnNames = {"Куди","Вага","Тип","Тип","Статус"};
+public class RoutingTable extends AbstractTableModel {
+    private final String[] columnNames = {"Куди","Відстань","Шлях"};
 
-    private Node node;
-    private List<Link> links;
+    private HashMap<Node,Path> routingTable;
 
+    ArrayList<Node> nodesTo;
 
-    public LinksTableModel(Node node) {
-        this.node = node;
-        this.links = node.getLinks();
+    public RoutingTable(HashMap<Node,Path> routingTable) {
+        this.routingTable = routingTable;
 
+        nodesTo = new ArrayList<>(routingTable.keySet());
+        Collections.sort(nodesTo);
     }
 
     @Override
@@ -46,23 +48,21 @@ public class LinksTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return links.size();
+        return nodesTo.size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Link link = links.get(rowIndex);
+//        {"Куди","Відстань","Шлях"}
+
+        Node nodeTo = nodesTo.get(rowIndex);
         switch (columnIndex) {
             case 0:
-                return Integer.toString(link.getAnotherNode(node).getId());
+                return Integer.toString(nodeTo.getId());
             case 1:
-                return Integer.toString(link.getWeight());
+                return routingTable.get(nodeTo).weight;
             case 2:
-                return link.getConnectionType().toString();
-            case 3:
-                return link.getLinkType().toString();
-            case 4:
-                return (link.isActive())? "Активний":"Відключений";
+                return routingTable.get(nodeTo).pathToString();
         }
         return "";
     }
@@ -78,11 +78,10 @@ public class LinksTableModel extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths[] = {50,50,90,80,table.getWidth()-270};
+        final int widths[] = {100,100,table.getWidth()-200};
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
-
     }
 
 }

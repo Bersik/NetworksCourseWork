@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class NeighborTable extends AbstractTableModel {
 
-    private final String[] columnNames = {"Вузол","Пройшло з останнього оновлення"};
+    private final String[] columnNames = {"Вузол","Пройшло часу з останнього оновлення"};
 
     private ArrayList<Map.Entry<Node,Long>> nodes;
 
@@ -72,7 +72,7 @@ public class NeighborTable extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths[] = {40,120};
+        int widths[] = {100,table.getWidth()-100};
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);

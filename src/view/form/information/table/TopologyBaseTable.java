@@ -15,18 +15,6 @@ import java.util.*;
  * @author Bersik
  */
 
-class TableEntry {
-    public int from;
-    public int to;
-    public int weight;
-
-    public TableEntry(int from, int to, int weight) {
-        this.from = from;
-        this.to = to;
-        this.weight = weight;
-    }
-}
-
 public class TopologyBaseTable extends AbstractTableModel {
 
     private TopologyBase topologyBase;
@@ -63,7 +51,7 @@ public class TopologyBaseTable extends AbstractTableModel {
         table = new int[rowNames.size()][columnNames.size()];
         for(Node nodeFrom:topologyBase.keySet()){
             HashMap<Node,Integer> map = topologyBase.get(nodeFrom);
-            //Можна видалити, якщо в середині null, але десь в глобальнішому місці
+            //TODO Можна видалити, якщо в середині null, але десь в глобальнішому місці
             if (map != null)
                 for(Node nodeTo:map.keySet()){
                     table[rowNames.indexOf(nodeFrom.getId())][columnNames.indexOf(nodeTo.getId())] = map.get(nodeTo);
@@ -79,29 +67,27 @@ public class TopologyBaseTable extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return columnNames.size();
+        return columnNames.size() + 1;
     }
 
     @Override
     public String getColumnName(int columnIndex) {
-        if (columnIndex > 0 && columnIndex < columnNames.size())
-            return "To " + Integer.toString(columnNames.get(columnIndex-1));
+        if (columnIndex > 0 && columnIndex <= columnNames.size())
+            return "В " + Integer.toString(columnNames.get(columnIndex-1));
         return "";
     }
 
     @Override
     public int getRowCount() {
-        return rowNames.size() + 1;
+        return rowNames.size();
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (rowIndex == 0)
-            return "";
         if (columnIndex == 0){
-            return "From " + Integer.toString(rowNames.get(rowIndex-1));
-        }else if (columnIndex < rowNames.size()){
-            return Integer.toString(table[rowIndex-1][columnIndex-1]);
+            return "З " + Integer.toString(rowNames.get(rowIndex));
+        }else if (columnIndex <= columnNames.size()){
+            return Integer.toString(table[rowIndex][columnIndex-1]);
         }
         return "";
     }

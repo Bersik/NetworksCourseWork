@@ -43,12 +43,19 @@ public class MainWindow extends JFrame {
     protected JPanel nodeParameters;
     protected JLabel labelLength;
     protected JSlider sliderSpeed;
-    protected JRadioButton мінімальнаКількістьТранзитнихВузлівRadioButton;
-    protected JRadioButton мінімальнийШляхRadioButton;
+    protected JRadioButton shortestTransitRadioButton;
+    protected JRadioButton shortestDistanceRadioButton;
     protected JCheckBox генераціяCheckBox;
     protected JButton startStopButton;
     protected JButton pauseButton;
     protected JButton stepButton;
+    protected JComboBox<Integer> nodeFromComboBox;
+    protected JComboBox<Integer> nodeToComboBox;
+    protected JRadioButton UDPRadioButton;
+    protected JRadioButton TCPRadioButton;
+    protected JButton sendMessageButton;
+    protected JFormattedTextField packetSizeTextField1;
+    protected JFormattedTextField messageSizeTextField;
 
     protected void groupRadioButtons() {
         communicationMethod.add(buttonDuplex);
@@ -75,7 +82,7 @@ public class MainWindow extends JFrame {
         setExtendedState(MAXIMIZED_BOTH);
     }
 
-    private void createUIComponents() {
+    protected void createUIComponents() {
         image1 = new view.Image(700, 600);
     }
 

@@ -15,8 +15,13 @@ import java.util.ArrayList;
 public abstract class Packet implements Comparable<Packet>, Serializable {
 
     protected static int nextId = 0;
+
     protected Node from;
     protected Node to;
+
+    protected Node baseFrom;
+    protected Node baseTo;
+
     //Розмір
     protected int size;
     //Пріорітет
@@ -33,13 +38,17 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
 
     protected int position;
     //номер пакету
-    private int number;
+    protected int currentNumber;
     //загальна кількість пакетів у повідомленні
-    private int totalNumber;
+    protected int count;
 
-    public Packet(Node from, Node to, Link link, int size, PacketPriority priority, int ID) {
+    public Packet(Node from, Node to, Link link, int size, PacketPriority priority, int ID, int currentNumber, int count) {
         this.from = from;
         this.to = to;
+
+        this.baseFrom = from;
+        this.baseTo = to;
+
         this.link = link;
         this.size = size;
         //TCP,UDP
@@ -47,11 +56,22 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
         this.timeBorn = Network.getTime();
         this.packetId = ID;
 
-
-        this.number = 1;
-        this.totalNumber = 1;
+        this.currentNumber = currentNumber;
+        this.count = count;
 
         position = 0;
+    }
+
+    public Packet(Node from, Node to, Link link, int size, PacketPriority priority, int ID) {
+        this(from, to, link, size, priority, ID, 1, 1);
+    }
+
+    public Packet(Node from, Node to, Link link, int size, PacketPriority priority) {
+        this(from, to, link, size, priority, nextId++);
+    }
+
+    public Packet(Node from, Node to, Link link, int size, int currentNumber, int count) {
+        this(from, to, link, size, PacketPriority.LOW,nextId++,currentNumber,count);
     }
 
     public Packet(Node from, Node to, Link link, int size) {
@@ -59,9 +79,8 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
     }
 
 
-    public Packet(Node from, Node to, Link link, int size, PacketPriority priority) {
-        this(from, to, link, size, priority, nextId++);
-    }
+
+
 
     //Пакет робить крок
     public boolean increment() {
@@ -100,11 +119,7 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
 
     @Override
     public int compareTo(Packet o) {
-        if (priority.getNum() > o.getPriority().getNum())
-            return 1;
-        if (priority.getNum() < o.getPriority().getNum())
-            return -1;
-        return 0;
+        return new PacketComparator().compare(this, o);
     }
 
     public static int getNewPacketId() {
@@ -112,10 +127,39 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
     }
 
     public int getNumber() {
-        return number;
+        return count;
     }
 
     public int getTotalNumber() {
-        return totalNumber;
+        return currentNumber;
+    }
+
+    public long getTimeBorn() {
+        return timeBorn;
+    }
+
+
+    public void setFrom(Node from) {
+        this.from = from;
+    }
+
+    public void setTo(Node to) {
+        this.to = to;
+    }
+
+    public void setLink(Link link) {
+        this.link = link;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    public Node getBaseFrom() {
+        return baseFrom;
+    }
+
+    public Node getBaseTo() {
+        return baseTo;
     }
 }
