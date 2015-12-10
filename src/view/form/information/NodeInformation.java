@@ -2,7 +2,6 @@ package view.form.information;
 
 import network.Link;
 import network.Node;
-import network.model.Buffer;
 import view.Realization;
 
 import javax.swing.*;

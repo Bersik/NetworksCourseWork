@@ -1,10 +1,8 @@
-package network.model.packet;
+package network.packet;
 
 import network.Link;
 import network.Node;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**

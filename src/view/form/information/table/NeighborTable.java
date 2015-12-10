@@ -1,15 +1,12 @@
 package view.form.information.table;
 
-import network.Link;
 import network.Node;
-import network.model.Network;
+import network.Network;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.JTableHeader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**

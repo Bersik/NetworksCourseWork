@@ -1,4 +1,4 @@
-package network.model.packet;
+package network.packet;
 
 import network.Link;
 import network.Node;
@@ -9,15 +9,15 @@ import network.Node;
  * @author Bersik
  */
 
-public class UDPPacket extends Packet {
-    public UDPPacket(Node from, Node to, Link link, int size, int currentNum, int count) {
+public class DatagramPacket extends Packet {
+    public DatagramPacket(Node from, Node to, Link link, int size, int currentNum, int count) {
         super(from, to, link, size, currentNum, count);
         baseFrom = from;
         baseTo = to;
         this.to = link.getAnotherNode(from);
     }
 
-    public UDPPacket(Node from, Node to, Link link, int size) {
+    public DatagramPacket(Node from, Node to, Link link, int size) {
         this(from, to, link, size, 1, 1);
     }
 

@@ -1,9 +1,9 @@
-package network.model.packet.accept;
+package network.packet;
 
 import network.Link;
 import network.Node;
-import network.model.packet.Packet;
-import network.model.packet.PacketPriority;
+import network.packet.Packet;
+import network.packet.PacketPriority;
 
 /**
  * Created on 3:47 01.12.2015

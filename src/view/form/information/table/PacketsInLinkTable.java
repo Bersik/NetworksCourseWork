@@ -1,13 +1,11 @@
 package view.form.information.table;
 
 import network.Link;
-import network.model.packet.Packet;
+import network.packet.Packet;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.JTableHeader;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created on 15:27 03.12.2015
@@ -58,10 +56,10 @@ public class PacketsInLinkTable extends AbstractTableModel {
                 return Integer.toString(packet.getId());
             case 1:
                 //"Звідки"
-                return Integer.toString(packet.getFrom().getId());
+                return Integer.toString(packet.getBaseFrom().getId());
             case 2:
                 //"Куди"
-                return Integer.toString(packet.getTo().getId());
+                return Integer.toString(packet.getBaseTo().getId());
             case 3:
                 //"Тип"
                 return packet.getClass().getSimpleName();
@@ -88,10 +86,9 @@ public class PacketsInLinkTable extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths[] = {50,50,50,80,60,70,table.getWidth()-360};
+        final int widths[] = {55,50,50,120,60,70,60};
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
-
     }
 }

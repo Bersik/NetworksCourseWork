@@ -1,8 +1,8 @@
-package network.model.packet;
+package network.packet;
 
 import network.Link;
 import network.Node;
-import network.model.Network;
+import network.Network;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,6 +41,12 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
     protected int currentNumber;
     //загальна кількість пакетів у повідомленні
     protected int count;
+    private int currentId;
+
+    //час простою пакета в вузлах
+    private long waitTime;
+    protected static ArrayList<Packet> packets = new ArrayList<>();
+
 
     public Packet(Node from, Node to, Link link, int size, PacketPriority priority, int ID, int currentNumber, int count) {
         this.from = from;
@@ -60,6 +66,8 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
         this.count = count;
 
         position = 0;
+        waitTime = 0;
+        packets.add(this);
     }
 
     public Packet(Node from, Node to, Link link, int size, PacketPriority priority, int ID) {
@@ -71,15 +79,16 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
     }
 
     public Packet(Node from, Node to, Link link, int size, int currentNumber, int count) {
-        this(from, to, link, size, PacketPriority.LOW,nextId++,currentNumber,count);
+        this(from, to, link, size, PacketPriority.LOW, nextId++, currentNumber, count);
     }
 
     public Packet(Node from, Node to, Link link, int size) {
         this(from, to, link, size, PacketPriority.LOW);
     }
 
-
-
+    public static int getCurrentId() {
+        return nextId;
+    }
 
 
     //Пакет робить крок
@@ -134,10 +143,6 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
         return currentNumber;
     }
 
-    public long getTimeBorn() {
-        return timeBorn;
-    }
-
 
     public void setFrom(Node from) {
         this.from = from;
@@ -163,15 +168,33 @@ public abstract class Packet implements Comparable<Packet>, Serializable {
         return baseTo;
     }
 
-    /*
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Packet){
-            if (((Packet) obj).getId() == getId())
-                return true;
-        }
+    public static void clean() {
+        nextId = 0;
+        clearPackets();
+    }
 
-        return false;
-    }*/
+    public static void clearPackets(){
+        packets = new ArrayList<>();
+    }
+
+    public void waitTact() {
+        waitTime++;
+    }
+
+    public static int calculateWaitTime() {
+        long waitTimes = 0;
+
+        for (Packet packet : packets) {
+            waitTimes += packet.waitTime;
+        }
+        if (packets.size() > 0)
+            return (int) (waitTimes / packets.size());
+        else
+            return 0;
+    }
+
+    public static int packetsCount() {
+        return packets.size();
+    }
 }
 

@@ -4,13 +4,9 @@ import network.algorithm.AlgorithmType;
 import network.algorithm.Dijkstra;
 import network.algorithm.Path;
 import network.exception.BufferLengthException;
-import network.model.Buffer;
-import network.model.Network;
-import network.model.VirtualConnection;
-import network.model.packet.LSAPacket;
-import network.model.packet.Packet;
-import network.model.packet.PacketComparator;
-import network.model.packet.table.TopologyBase;
+import network.packet.LSAPacket;
+import network.packet.Packet;
+import network.packet.PacketComparator;
 
 import java.awt.*;
 import java.io.Serializable;
@@ -49,10 +45,11 @@ public class Node implements Serializable, Comparable<Node> {
     //список вихідних буферів
     private HashMap<Link, Buffer> outBuffers;
 
+
     //Таблиця сусідів (час останнього їхнього оновлення)
     private HashMap<Node, Long> neighbors;
     //час останньої розсилки HELLO пакетів
-    private long lastUpdateNeighbor = 0;
+    private long lastUpdateNeighbor;
     //індикатор змін в таблиці сусідів
     private boolean changesNeighborTable = false;
 
@@ -253,7 +250,7 @@ public class Node implements Serializable, Comparable<Node> {
                 /*Пробуємо відправити пакет.
                 Дивимся, наскільки завантажений канал
                 */
-                if ((buffer.size() > 0) && (link.countPackets() < MAX_PACKETS_IN_LINK)) {
+                if ((buffer.size() > 0) && (link.countPackets(buffer.peek().getFrom()) < MAX_PACKETS_IN_LINK)) {
                     /*якщо це напівдуплекс
                     В нас кожен такт актоматично звільняється
 
@@ -262,7 +259,7 @@ public class Node implements Serializable, Comparable<Node> {
 
                         //1. в канал передано достатьно пакетів, потрібно змінити напрям
                         if (link.getOverallCountPackets() >= COUNT_CHANGE_DIRECTION_HALF_DUPLEX) {
-                            if (link.countPackets() != 0)
+                            if (link.countPackets(null) != 0)
                                 return;
                             else {
                                 link.setOverallCountPackets(0);
@@ -293,7 +290,7 @@ public class Node implements Serializable, Comparable<Node> {
                 позначаємо його як вільним
                  */
                 if ((buffer.size() == 0) && (link.getLinkType() == LinkType.HALF_DUPLEX) &&
-                        (link.getTransmitter() == this) && (link.countPackets() == 0)) {
+                        (link.getTransmitter() == this) && (link.countPackets(null) == 0)) {
                     link.setTransmitter(null);
                     link.setOverallCountPackets(0);
                 }
@@ -352,7 +349,10 @@ public class Node implements Serializable, Comparable<Node> {
             return null;
         HashMap<Node, Integer> neighborTable = new HashMap<>();
         for (Node node : neighbors.keySet()) {
-            int len = getLength(node);
+            Link link = getLinkWithNode(node);
+            int len = link.getWeight();
+            if (link.getConnectionType() == ConnectionType.SATELLITE)
+                len *=3;
             neighborTable.put(node, len);
         }
         return neighborTable;
@@ -366,11 +366,29 @@ public class Node implements Serializable, Comparable<Node> {
         throw new RuntimeException();
     }
 
+    public Link getLinkWithNode(Node node) {
+        for (Link link : outBuffers.keySet()) {
+            if (link.getAnotherNode(this) == node)
+                return link;
+        }
+        throw new RuntimeException();
+    }
+
 
     public void clean() {
-        setLastUpdateNeighbor(-100000);
+        setLastUpdateNeighbor(- 10 * UPDATE_NEIGHBOR);
         waitingToConfirm = new HashMap<>();
         neighbors = new HashMap<>();
+        changesNeighborTable = false;
+        performed = new HashMap<>();
+        topologyBase = new TopologyBase();
+        routingTable = new HashMap<>();
+        virtualConnections = new HashMap<>();
+        virtualConnectionsQueue = new HashMap<>();
+
+        for(Link link:outBuffers.keySet()){
+            outBuffers.get(link).clear();
+        }
     }
 
     public void addPerformedPacket(Packet packet) {
@@ -486,4 +504,28 @@ public class Node implements Serializable, Comparable<Node> {
     }
 
 
+    public void ckeckBuffers() {
+        for(Link link:outBuffers.keySet()){
+            Buffer buffer = outBuffers.get(link);
+
+            HashMap<Node,Integer> map = topologyBase.get(this);
+            if (map != null) {
+                Integer lastWeight = map.get(link.getAnotherNode(this));
+                if (lastWeight!= null) {
+                    if (buffer.calculateDelay(link.getWeight(), lastWeight) > 0) {
+                        changesNeighborTable = true;
+                    }
+                }
+            }
+        }
+    }
+
+    public ArrayList<Packet> getPackets() {
+        ArrayList<Packet> packets = new ArrayList<>();
+        for(Link link:outBuffers.keySet()){
+            if (outBuffers.get(link) != null)
+                packets.addAll(outBuffers.get(link));
+        }
+        return packets;
+    }
 }

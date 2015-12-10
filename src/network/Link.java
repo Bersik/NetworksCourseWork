@@ -1,6 +1,6 @@
 package network;
 
-import network.model.packet.Packet;
+import network.packet.Packet;
 import settings.Settings;
 
 import java.awt.*;
@@ -138,8 +138,18 @@ public class Link implements Serializable {
         return ((node == node2) || (node == null)) ? node1 : node2;
     }
 
-    public int countPackets() {
-        return packets.size();
+    public int countPackets(Node nodeFrom) {
+        if (getLinkType() == LinkType.HALF_DUPLEX){
+            return packets.size();
+        }
+        else{
+            int count = 0;
+            for (Packet packet:packets)
+                if (packet.getFrom() == nodeFrom)
+                    count++;
+            return count;
+        }
+
     }
 
     public int getOverallCountPackets() {
@@ -150,11 +160,6 @@ public class Link implements Serializable {
         packets.add(packet);
         overallCountPackets++;
     }
-
-    public boolean isFree() {
-        return free;
-    }
-
 
     public void setFree(boolean free) {
         this.free = free;

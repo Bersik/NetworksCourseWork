@@ -12,7 +12,7 @@ public class FileWorks {
     /**
      * Записати в файл
      *
-     * @param file    файл
+     * @param file                 файл
      * @param networkSerialization мережа
      * @throws IOException
      */

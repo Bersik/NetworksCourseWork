@@ -52,7 +52,7 @@
           <tabbedpane id="5cd1a" binding="tabbedPane">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="2" indent="0" use-parent-layout="false">
-                <preferred-size width="455" height="200"/>
+                <preferred-size width="500" height="200"/>
               </grid>
             </constraints>
             <properties/>
@@ -170,9 +170,7 @@
                 <children>
                   <scrollpane id="2cbdd">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                        <preferred-size width="343" height="-1"/>
-                      </grid>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <verticalScrollBarPolicy value="22"/>
@@ -181,7 +179,9 @@
                     <children>
                       <component id="ac0e4" class="javax.swing.JTable" binding="packetsTable">
                         <constraints/>
-                        <properties/>
+                        <properties>
+                          <preferredScrollableViewportSize width="-1" height="-1"/>
+                        </properties>
                       </component>
                     </children>
                   </scrollpane>

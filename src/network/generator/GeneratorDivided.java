@@ -1,5 +1,9 @@
-package network;
+package network.generator;
 
+import network.ConnectionType;
+import network.Link;
+import network.LinkType;
+import network.Node;
 import view.Realization;
 
 import java.awt.*;
@@ -13,16 +17,17 @@ import static settings.Settings.*;
  *
  * @author Bersik
  */
-public class GeneratorNetwork {
-    private ArrayList<Node> nodes;
-    private ArrayList<Link> links;
-    private int[] weights;
-    private int[] bufferLengths;
-    private Random random;
-    private int degreeNetworkValue;
+public class GeneratorDivided implements Generator {
+    protected ArrayList<Node> nodes1;
+    protected ArrayList<Node> nodes2;
+    protected ArrayList<Link> links;
+    protected int[] weights;
+    protected int[] bufferLengths;
+    protected Random random;
+    protected int degreeNetworkValue;
 
     //розмір площини
-    private Dimension dimension;
+    protected Dimension dimension;
 
     /**
      * Створює мережу
@@ -32,9 +37,8 @@ public class GeneratorNetwork {
      * @param countSatelliteLinksValue   кількість супутникових ліній зв'язку
      * @param degreeNetworkValue         ступінь мережі
      */
-    public GeneratorNetwork(Dimension dimension, int countCommutationNodesValue,
+    public GeneratorDivided(Dimension dimension, int countCommutationNodesValue,
                             int countSatelliteLinksValue, int degreeNetworkValue, int[] weights, int[] bufferLengths) {
-        nodes = new ArrayList<>();
         links = new ArrayList<>();
         random = new Random();
         this.weights = weights;
@@ -52,26 +56,24 @@ public class GeneratorNetwork {
      *
      * @return точка
      */
-    private Point generateRandomPoint() {
+    protected Point generateRandomPoint(int group) {
         final int OFFSET = CIRCLE_RADIUS * 2;
         final int MIDDLE_OFFSET_X = 200;
-        final int MIDDLE_OFFSET_Y = 200;
 
         int width = (int) dimension.getWidth();
         int height = (int) dimension.getHeight();
 
         int middleX = width / 2;
-        int middleY = height / 2;
 
         int x;
         int y;
         while (true) {
             x = OFFSET + random.nextInt(width - OFFSET * 2);
             y = OFFSET + random.nextInt(height - OFFSET * 2);
-            if (x > middleX - MIDDLE_OFFSET_X && x < middleX + MIDDLE_OFFSET_X &&
-                    y > middleY - MIDDLE_OFFSET_Y && y < middleY + MIDDLE_OFFSET_Y)
-                continue;
-            break;
+            if (group == 1 && x < middleX - MIDDLE_OFFSET_X)
+                break;
+            else if (group == 2 && x > middleX + MIDDLE_OFFSET_X)
+                break;
         }
 
         return new Point(x, y);
@@ -82,11 +84,27 @@ public class GeneratorNetwork {
      *
      * @param countCommutationNodesValue кількість вузлів
      */
-    private void generateNodes(int countCommutationNodesValue) {
+    protected void generateNodes(int countCommutationNodesValue) {
 
-        for (int i = 0; i < countCommutationNodesValue; i++) {
+        int countNodesInGroup1 = countCommutationNodesValue/2;
+        int countNodesInGroup2 = countCommutationNodesValue - countNodesInGroup1;
+
+        nodes1 = generateGroupNodes(1,countNodesInGroup1);
+        nodes2 = generateGroupNodes(2,countNodesInGroup2);
+
+    }
+
+    /**
+     * Генерує групу вузлів
+     * @param group номер групи
+     * @param count кількість
+     * @return список вузлів
+     */
+    private ArrayList<Node> generateGroupNodes(int group,int count){
+        ArrayList<Node> nodes = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
             while (true) {
-                Point p = generateRandomPoint();
+                Point p = generateRandomPoint(group);
                 if (!Node.intersectNodes(nodes, p, RADIUS_INTERSECT * 2)) {
                     int lenBuffer = bufferLengths[random.nextInt(bufferLengths.length)];
                     nodes.add(new Node(p, lenBuffer));
@@ -94,7 +112,19 @@ public class GeneratorNetwork {
                 }
             }
         }
+        return nodes;
+    }
 
+    /**
+     * Генерує канали
+     */
+    protected void generateLinkInGroup(ArrayList<Node> nodes) {
+        for (Node node1 : nodes) {
+            for (int i = node1.countLinks(); i < degreeNetworkValue; i++) {
+                Node node2 = getSecondNode(node1, nodes);
+                addNewLink(node1, node2, weights[random.nextInt(weights.length)], getRandomLinkType(), ConnectionType.GROUND);
+            }
+        }
     }
 
     /**
@@ -102,13 +132,13 @@ public class GeneratorNetwork {
      *
      * @param countSatelliteLinksValue кількість супутникових каналів
      */
-    private void generateLink(int countSatelliteLinksValue) {
+    protected void generateLink(int countSatelliteLinksValue) {
 
         for (int i = 0; i < countSatelliteLinksValue; i++) {
             //Шукаємо перший вузол
-            Node node1 = getFirstNode();
+            Node node1 = getFirstNode(nodes1);
             //Шукаємо другий вузол
-            Node node2 = getSecondNode(node1);
+            Node node2 = getSecondNode(node1,nodes2);
 
             int minWeightID = 3 * weights.length / 4;
             int weightID = minWeightID + random.nextInt(weights.length - minWeightID);
@@ -116,13 +146,13 @@ public class GeneratorNetwork {
             addNewLink(node1, node2, weights[weightID], getRandomLinkType(), ConnectionType.SATELLITE);
         }
 
-        for (Node node1 : nodes) {
-            for (int i = node1.countLinks(); i < degreeNetworkValue; i++) {
-                Node node2 = getSecondNode(node1);
-                addNewLink(node1, node2, weights[random.nextInt(weights.length)], getRandomLinkType(), ConnectionType.GROUND);
-            }
-        }
+        generateLinkInGroup(nodes1);
+        generateLinkInGroup(nodes2);
+
+
+
     }
+
 
     /**
      * Додає новий канал
@@ -133,7 +163,7 @@ public class GeneratorNetwork {
      * @param linkType       тип з'єднання
      * @param connectionType тип з'єднання
      */
-    private void addNewLink(Node node1, Node node2, int weight, LinkType linkType, ConnectionType connectionType) {
+    protected void addNewLink(Node node1, Node node2, int weight, LinkType linkType, ConnectionType connectionType) {
         Link link = new Link(node1, node2,
                 weight, linkType, connectionType);
         node1.addLink(link);
@@ -146,7 +176,7 @@ public class GeneratorNetwork {
      *
      * @return перший вузол
      */
-    private Node getFirstNode() {
+    protected Node getFirstNode(ArrayList<Node> nodes) {
         Node node1;
         while (true) {
             node1 = nodes.get(random.nextInt(nodes.size()));
@@ -161,7 +191,7 @@ public class GeneratorNetwork {
      * @param firstNode перший вузол
      * @return другий вузол
      */
-    private Node getSecondNode(Node firstNode) {
+    protected Node getSecondNode(Node firstNode,ArrayList<Node> nodes) {
         Node node2;
         node2Circle:
         while (true) {
@@ -181,17 +211,21 @@ public class GeneratorNetwork {
      *
      * @return тип з'єднання
      */
-    private LinkType getRandomLinkType() {
+    protected LinkType getRandomLinkType() {
         if (random.nextDouble() < 0.5)
             return LinkType.DUPLEX;
         return LinkType.HALF_DUPLEX;
     }
 
     public ArrayList<Node> getNodes() {
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodes.addAll(nodes1);
+        nodes.addAll(nodes2);
         return nodes;
     }
 
     public ArrayList<Link> getLinks() {
         return links;
     }
+
 }

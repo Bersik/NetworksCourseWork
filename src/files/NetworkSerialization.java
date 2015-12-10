@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 /**
  * Created on 5:20 29.11.2015
+ * Об'єкт, який буде серіалізуватись
  *
  * @author Bersik
  */

@@ -5,6 +5,7 @@ import java.io.File;
 
 /**
  * Created on 5:12 29.11.2015
+ * Фільтр для файлів
  *
  * @author Bersik
  */

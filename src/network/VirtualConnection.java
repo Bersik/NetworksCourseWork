@@ -1,4 +1,4 @@
-package network.model;
+package network;
 
 import network.Link;
 import network.Node;

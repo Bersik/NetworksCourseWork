@@ -1,12 +1,10 @@
 package view.form.information.table;
 
-import network.Link;
 import network.Node;
-import network.model.packet.table.TopologyBase;
+import network.TopologyBase;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.JTableHeader;
 import java.util.*;
 
 /**
@@ -49,6 +47,9 @@ public class TopologyBaseTable extends AbstractTableModel {
 
 
         table = new int[rowNames.size()][columnNames.size()];
+        for(int i=0;i<table.length;i++)
+            for(int j=0;j<table.length;j++)
+                table[i][j] = -1;
         for(Node nodeFrom:topologyBase.keySet()){
             HashMap<Node,Integer> map = topologyBase.get(nodeFrom);
             //TODO Можна видалити, якщо в середині null, але десь в глобальнішому місці
@@ -87,7 +88,12 @@ public class TopologyBaseTable extends AbstractTableModel {
         if (columnIndex == 0){
             return "З " + Integer.toString(rowNames.get(rowIndex));
         }else if (columnIndex <= columnNames.size()){
-            return Integer.toString(table[rowIndex][columnIndex-1]);
+            int val = table[rowIndex][columnIndex-1];
+            if (rowIndex == columnIndex-1)
+                return "0";
+            if (val == -1)
+                return "-";
+            return Integer.toString(val);
         }
         return "";
     }
@@ -103,7 +109,7 @@ public class TopologyBaseTable extends AbstractTableModel {
     }
 
     public static void setColumnsWidth(JTable table) {
-        final int widths = 50;
+        final int widths = 35;
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         for (int i = 0; i < table.getColumnCount(); i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths);

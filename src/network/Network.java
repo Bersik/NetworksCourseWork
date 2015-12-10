@@ -1,17 +1,14 @@
-package network.model;
+package network;
 
-import network.MessageType;
 import network.algorithm.AlgorithmType;
 import network.exception.BufferLengthException;
-import network.Link;
-import network.Node;
-import network.model.packet.*;
-import network.model.packet.accept.AcceptPacket;
+import network.packet.*;
+import network.packet.AcceptPacket;
 
 import static settings.Settings.*;
 import static network.algorithm.AlgorithmType.*;
 
-import network.model.packet.tcp.*;
+import network.packet.vt.*;
 import view.Realization;
 
 import javax.swing.*;
@@ -55,6 +52,9 @@ public class Network implements ActionListener {
     private double frequency;
     private Random random;
 
+    private static int countInformationPacket;
+    private static long averageWaitTime;
+
 
     public Network(Realization frame, ArrayList<Node> nodes, ArrayList<Link> links, int delay) {
         //Ініціалізація списку вузлів і каналів
@@ -70,23 +70,6 @@ public class Network implements ActionListener {
 
         random = new Random();
     }
-
-
-    public ArrayList<Node> getNodes() {
-        return nodes;
-    }
-
-    public ArrayList<Link> getLinks() {
-        return links;
-    }
-
-    /**
-     * Типу перед видаленням почистити щось там
-     */
-    public void destroy() {
-
-    }
-
 
     public void startTimer() {
         cleanAll();
@@ -110,20 +93,20 @@ public class Network implements ActionListener {
             timer.stop();
         }
 
-        //TODO Знищити всі пакети
         cleanAll();
 
         frame.update();
     }
 
     public void cleanAll() {
-        for (Node node : nodes)
-            node.clean();
-        for (Link link : links) {
-            link.clean();
-        }
+        nodes.forEach(Node::clean);
+        links.forEach(Link::clean);
 
+        generation = false;
         time = 0;
+        countInformationPacket = 0;
+        averageWaitTime = 0;
+        Packet.clean();
     }
 
     public void stepTimer() {
@@ -152,7 +135,6 @@ public class Network implements ActionListener {
             }
         }
 
-
         /**
          * Зробимо кожних 10 мілісекунд
          */
@@ -162,9 +144,12 @@ public class Network implements ActionListener {
          */
         if (time % UPDATE_LSA == 0)
             for (Node node : nodes) {
+
+                //Перевіряє переповнення буферів. Якщо буфер переповнений, розсилає інфу про це, змінюючи канал
+                //node.ckeckBuffers();
+
                 //якщо є зміни, розсилаємо нову таблицю
                 if (node.checkNeighborTable()) {
-
                     sendLSA(node);
                 }
             }
@@ -179,8 +164,22 @@ public class Network implements ActionListener {
             node.trySendPackets();
         }
 
+        /**
+         * Розраховуємо час простою пакетів
+         */
+        calculateWaitTime();
+
         time++;
         frame.update();
+    }
+
+    private void calculateWaitTime() {
+        for (Node node : nodes) {
+            List<Packet> packets = node.getPackets();
+            for (Packet packet : packets) {
+                packet.waitTact();
+            }
+        }
     }
 
 
@@ -188,7 +187,6 @@ public class Network implements ActionListener {
      * 0. Проходимо по всім пакетам, і додаємо їхню позицію(час) на 1(пакети в каналах і в вихідних буферах).
      * Якщо позиція >= довжині каналу, то говоримо, що пакет дійшов (обробляємо пакет формуємо підтверження).
      */
-
     private void stepPackets() {
         //спочатку всі пакети, що в каналах
         for (Link link : links) {
@@ -229,12 +227,14 @@ public class Network implements ActionListener {
         if (packet instanceof LSAPacket) {
             Packet departurePacket = new AcceptPacket(nodeTo, nodeFrom, link, packet.getId());
             //Додаємо пакет
+
             try {
                 //в той самий канал відправляємо підтвердження
                 nodeTo.addPacket(departurePacket, packet.getLink());
             } catch (BufferLengthException e) {
                 System.out.println("Переповнення вихідного буферу");
             }
+
             LSAPacket lsaPacket = (LSAPacket) packet;
             //оновлюємо таблицю. Якщо є зміни, відсилаємо наш пакет всім іншим (окрім вузла відправача)
 
@@ -276,13 +276,13 @@ public class Network implements ActionListener {
         /**
          * Якщо прийшов UDP пакет, перевіряємо чи це його кінцева точка
          */
-        if (packet instanceof UDPPacket) {
+        if (packet instanceof DatagramPacket) {
             //якщо кінцева - додаємо до виконаних
-            if (((UDPPacket) packet).getBaseTo() == nodeTo) {
+            if (((DatagramPacket) packet).getBaseTo() == nodeTo) {
                 nodeTo.addPerformedPacket(packet);
             } else {
                 //інакше пересилаємо далі
-                Link nextLink = nodeTo.getLinkForSend(((UDPPacket) packet).getBaseTo());
+                Link nextLink = nodeTo.getLinkForSend(((DatagramPacket) packet).getBaseTo());
                 if (nextLink != null) {
 
                     if (sendNext(nextLink, packet, nodeTo))
@@ -326,9 +326,9 @@ public class Network implements ActionListener {
          * якщо прийшов пакет встановлення з'єднання через віртуальний канал
          * (під час подорожі пакет створює цей віртуальний канал на кожному вузлі)
          */
-        if (packet instanceof ConnectionTCPPacket) {
+        if (packet instanceof ConnectionVirtualConnPacket) {
             //якщо кінцева - додаємо до виконаних
-            ConnectionTCPPacket conPacket = (ConnectionTCPPacket) packet;
+            ConnectionVirtualConnPacket conPacket = (ConnectionVirtualConnPacket) packet;
             if (conPacket.getBaseTo() == nodeTo) {
                 nodeTo.addPerformedPacket(packet);
 
@@ -339,7 +339,7 @@ public class Network implements ActionListener {
                 //посилаємо підтвердження
 
                 Link departureLink = vt.getPrevLink();
-                Packet departurePacket = new AcceptConnectionTCPPacket(nodeTo,
+                Packet departurePacket = new AcceptConnectionVirtualConnPacket(nodeTo,
                         conPacket.getBaseFrom(), departureLink, packet.getId(), vtID);
                 //Додаємо пакет
                 try {
@@ -374,9 +374,9 @@ public class Network implements ActionListener {
         /**
          * Якщо прийшло підтвердження встановлення з'єднання
          */
-        if (packet instanceof AcceptConnectionTCPPacket) {
+        if (packet instanceof AcceptConnectionVirtualConnPacket) {
 
-            AcceptConnectionTCPPacket acceptConnectionTCPPacket = (AcceptConnectionTCPPacket) packet;
+            AcceptConnectionVirtualConnPacket acceptConnectionTCPPacket = (AcceptConnectionVirtualConnPacket) packet;
 
             //Підтверджуємо пакет
             nodeTo.confirmPacket(((AcceptPacket) packet).getIdOriginalPacket());
@@ -417,9 +417,9 @@ public class Network implements ActionListener {
         }
 
         //Якщо прийшов TCP пакет
-        if (packet instanceof TCPPacket) {
+        if (packet instanceof VirtualConnPacket) {
 
-            TCPPacket TCPPacket = (TCPPacket) packet;
+            VirtualConnPacket TCPPacket = (VirtualConnPacket) packet;
 
             //якщо кінцева - додаємо до виконаних
             if (TCPPacket.getBaseTo() == nodeTo) {
@@ -430,7 +430,7 @@ public class Network implements ActionListener {
 
                 //посилаємо підтвердження
                 Link departureLink = vt.getPrevLink();
-                Packet departurePacket = new AcceptTCPPacket(nodeTo,
+                Packet departurePacket = new AcceptVirtualConnPacket(nodeTo,
                         TCPPacket.getBaseFrom(), departureLink, packet.getId(), vtID);
                 //Додаємо пакет
                 try {
@@ -453,9 +453,9 @@ public class Network implements ActionListener {
         /**
          * якщо прийшло підтвердження TCP пакету
          */
-        if (packet instanceof AcceptTCPPacket) {
+        if (packet instanceof AcceptVirtualConnPacket) {
             //якщо кінцева - додаємо до виконаних
-            AcceptTCPPacket conPacket = (AcceptTCPPacket) packet;
+            AcceptVirtualConnPacket conPacket = (AcceptVirtualConnPacket) packet;
             if (conPacket.getBaseTo() == nodeTo) {
                 nodeTo.addPerformedPacket(packet);
 
@@ -475,9 +475,9 @@ public class Network implements ActionListener {
         /**
          * якщо прийшов запит на закриття віртуального каналу
          */
-        if (packet instanceof DisconnectionTCPPacket) {
+        if (packet instanceof DisconnectionVirtualConnPacket) {
             //якщо кінцева - додаємо до виконаних
-            DisconnectionTCPPacket discPacket = (DisconnectionTCPPacket) packet;
+            DisconnectionVirtualConnPacket discPacket = (DisconnectionVirtualConnPacket) packet;
             if (discPacket.getBaseTo() == nodeTo) {
                 nodeTo.addPerformedPacket(packet);
 
@@ -488,7 +488,7 @@ public class Network implements ActionListener {
 
                 //посилаємо підтвердження
                 Link departureLink = vt.getPrevLink();
-                Packet departurePacket = new AcceptDisconnectTCPPacket(nodeTo,
+                Packet departurePacket = new AcceptDisconnectVirtualConnPacket(nodeTo,
                         discPacket.getBaseFrom(), departureLink, packet.getId(), vtID);
                 //Додаємо пакет
                 try {
@@ -511,9 +511,9 @@ public class Network implements ActionListener {
         /**
          * ідемо і по черзі закриваємо канали на кожному вузлі
          */
-        if (packet instanceof AcceptDisconnectTCPPacket) {
+        if (packet instanceof AcceptDisconnectVirtualConnPacket) {
 
-            AcceptDisconnectTCPPacket discPacket = (AcceptDisconnectTCPPacket) packet;
+            AcceptDisconnectVirtualConnPacket discPacket = (AcceptDisconnectVirtualConnPacket) packet;
             //якщо кінцева - додаємо до виконаних
             if (discPacket.getBaseTo() == nodeTo) {
                 nodeTo.addPerformedPacket(packet);
@@ -539,22 +539,22 @@ public class Network implements ActionListener {
         return true;
     }
 
-    private void generate(){
-        for(Node from:nodes){
-            if (random.nextDouble() <= frequency){
+    private void generate() {
+        for (Node from : nodes) {
+            if (random.nextDouble() <= frequency) {
                 Node to;
-                while(true){
+                while (true) {
                     to = nodes.get(random.nextInt(nodes.size()));
                     if (from != to)
                         break;
                 }
-                int size = minMessageSize + random.nextInt(maxMessageSize-minMessageSize);
+                int size = minMessageSize + random.nextInt(maxMessageSize - minMessageSize+1);
                 try {
                     if (random.nextDouble() <= 0.5)
                         sendUDPMessage(from, to, size);
                     else
                         sendTCPMessage(from, to, size);
-                }catch (BufferLengthException be){
+                } catch (BufferLengthException be) {
                     be.printStackTrace();
                 }
             }
@@ -641,6 +641,9 @@ public class Network implements ActionListener {
      * @param messageType тип повідомлення(протокол) (TCP, UDP)
      */
     public void sendMessage(Node from, Node to, int size, MessageType messageType) throws BufferLengthException {
+
+        countInformationPacket = 0;
+        Packet.clearPackets();
         if (messageType == MessageType.UDP) {
             sendUDPMessage(from, to, size);
         } else if (messageType == MessageType.TCP)
@@ -659,22 +662,23 @@ public class Network implements ActionListener {
         Link link = detectBestLink(from, to);
 
         if (size <= packetSize) {
-            packets.add(new UDPPacket(from, to, link, size));
+            packets.add(new DatagramPacket(from, to, link, size));
         } else {
 
             int count = size / packetSize;
             if (size % packetSize == 0) {
                 for (int i = 1; i <= size / packetSize; i++)
-                    packets.add(new UDPPacket(from, to, link, packetSize, i, count));
+                    packets.add(new DatagramPacket(from, to, link, packetSize, i, count));
             } else {
                 count++;
                 for (int i = 1; i < count; i++)
-                    packets.add(new UDPPacket(from, to, link, packetSize, i, count));
+                    packets.add(new DatagramPacket(from, to, link, packetSize, i, count));
                 int size$ = count * packetSize;
-                packets.add(new UDPPacket(from, to, link, size - size$, count, count));
+                packets.add(new DatagramPacket(from, to, link, size - size$, count, count));
             }
         }
 
+        countInformationPacket += packets.size();
         for (Packet packet : packets) {
             from.addPacket(packet, link);
             if (acceptUDP)
@@ -703,29 +707,30 @@ public class Network implements ActionListener {
         int virtualConnectionID = vt.getID();
 
         if (size <= packetSize) {
-            packets.add(new TCPPacket(from, to, link, size, virtualConnectionID));
+            packets.add(new VirtualConnPacket(from, to, link, size, virtualConnectionID));
         } else {
 
             int count = size / packetSize;
             if (size % packetSize == 0) {
                 for (int i = 1; i <= size / packetSize; i++)
-                    packets.add(new TCPPacket(from, to, link, packetSize, i, count, virtualConnectionID));
+                    packets.add(new VirtualConnPacket(from, to, link, packetSize, i, count, virtualConnectionID));
             } else {
                 count++;
-                for (int i = 1; i < count - 1; i++)
-                    packets.add(new TCPPacket(from, to, link, packetSize, i, count, virtualConnectionID));
+                for (int i = 1; i < count; i++)
+                    packets.add(new VirtualConnPacket(from, to, link, packetSize, i, count, virtualConnectionID));
                 int size$ = count * packetSize;
-                packets.add(new TCPPacket(from, to, link, size - size$, count, count, virtualConnectionID));
-
+                packets.add(new VirtualConnPacket(from, to, link, size - size$, count, count, virtualConnectionID));
             }
         }
+        countInformationPacket += packets.size();
+
         //пакет відключення
-        packets.add(new DisconnectionTCPPacket(from, to, link, virtualConnectionID));
+        packets.add(new DisconnectionVirtualConnPacket(from, to, link, virtualConnectionID));
 
         from.addTCPMessages(virtualConnectionID, packets);
 
         //2. Відправляємо запит на встановлення з'єднання. (під час подорожі пакет створює цей віртуальний канал на кожному вузлі)
-        Packet connPacket = new ConnectionTCPPacket(from, to, link, virtualConnectionID);
+        Packet connPacket = new ConnectionVirtualConnPacket(from, to, link, virtualConnectionID);
         from.addPacket(connPacket, link);
         //додаємо в такі, які чекають підтвердження
         from.addConfirmPacket(connPacket);
@@ -745,7 +750,7 @@ public class Network implements ActionListener {
         this.algorithmType = algorithmType;
     }
 
-    public void startGeneration(double frequency,int minSize,int maxSize) {
+    public void startGeneration(double frequency, int minSize, int maxSize) {
         generation = true;
         this.frequency = frequency;
         this.minMessageSize = minSize;
@@ -755,4 +760,19 @@ public class Network implements ActionListener {
     public void stopGeneration() {
         generation = false;
     }
+
+    public void datagramAccept(boolean selected) {
+        acceptUDP = selected;
+    }
+
+
+    public static int getCountInformationPacket() {
+        return countInformationPacket;
+    }
+
+    public static int getCountSpecialPacket() {
+        return Packet.packetsCount() - countInformationPacket;
+    }
+
+
 }

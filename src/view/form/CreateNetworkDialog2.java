@@ -1,6 +1,8 @@
 package view.form;
 
-import network.GeneratorNetwork;
+import network.generator.Generator;
+import network.generator.GeneratorDivided;
+import network.generator.GeneratorNetwork;
 import network.Link;
 import network.Node;
 import util.ErrorDialog;
@@ -34,8 +36,10 @@ public class CreateNetworkDialog2 extends JDialog {
     private JTextField toLengthTextField;
     private JPanel listLengthPanel;
     private JPanel rangeLengthPanel;
+    private JRadioButton togetherRadioButton;
+    private JRadioButton separatelyRadioButton;
     private Realization frame;
-    private GeneratorNetwork generatorNetwork;
+    private Generator generatorNetwork;
 
     public CreateNetworkDialog2(Realization frame) {
         this.frame = frame;
@@ -72,7 +76,7 @@ public class CreateNetworkDialog2 extends JDialog {
         buttonOK.requestFocus();
     }
 
-    public static GeneratorNetwork showDialog(Realization frame) {
+    public static Generator showDialog(Realization frame) {
         CreateNetworkDialog2 dialog = new CreateNetworkDialog2(frame);
         dialog.launch();
         return dialog.getGeneratorNetwork();
@@ -137,8 +141,12 @@ public class CreateNetworkDialog2 extends JDialog {
 
         Dimension dimension = frame.getImageSize();
 
-        generatorNetwork = new GeneratorNetwork(dimension, countCommutationNodesValue, countSatelliteLinksValue,
+        if(togetherRadioButton.isSelected())
+            generatorNetwork = new GeneratorNetwork(dimension, countCommutationNodesValue, countSatelliteLinksValue,
                 degreeNetworkValue, weights, bufferLengths);
+        else
+            generatorNetwork = new GeneratorDivided(dimension, countCommutationNodesValue, countSatelliteLinksValue,
+                    degreeNetworkValue, weights, bufferLengths);
 
         dispose();
     }
@@ -248,7 +256,7 @@ public class CreateNetworkDialog2 extends JDialog {
 
     }
 
-    public GeneratorNetwork getGeneratorNetwork() {
+    public Generator getGeneratorNetwork() {
         return generatorNetwork;
     }
 

@@ -60,9 +60,4 @@ public class Dijkstra {
         return nodePathHashMap;
     }
 
-    public static HashMap<Node,Path> leastWeight(Node from,HashMap<Node,HashMap<Node,Integer>> g) {
-        return leastWeight(from,g,SHORTEST_DISTANCE);
-    }
-
-
 }

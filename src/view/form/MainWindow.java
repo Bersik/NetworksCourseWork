@@ -51,7 +51,7 @@ public class MainWindow extends JFrame {
     protected JButton stepButton;
     protected JComboBox<Integer> nodeFromComboBox;
     protected JComboBox<Integer> nodeToComboBox;
-    protected JRadioButton UDPRadioButton;
+    protected JRadioButton datagramRadioButton;
     protected JRadioButton TCPRadioButton;
     protected JButton sendMessageButton;
     protected JFormattedTextField packetSizeTextField1;
@@ -63,6 +63,11 @@ public class MainWindow extends JFrame {
     protected JPanel generatorPanel;
     protected JPanel typeRouting;
     protected JPanel messagesPanel;
+    protected JCheckBox UDPAcceptCheckBox;
+    protected JPanel settingsPanel;
+    protected JLabel countInformationPacket;
+    protected JLabel countSpecialPacket;
+    protected JLabel waitTimeLabel;
 
     protected void groupRadioButtons() {
         communicationMethod.add(buttonDuplex);

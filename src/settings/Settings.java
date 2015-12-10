@@ -12,7 +12,7 @@ public class Settings {
     public static final int CIRCLE_RADIUS = 12;
     public static final int RADIUS_ACCURACY = 3 + CIRCLE_RADIUS;
 
-    //Кольори для вузлів
+    /**Кольори для вузлів*/
     public static final Color NODE_COLOR = Color.decode("#94FAA5");
     public static final Color NODE_LINK1_COLOR = Color.decode("#25FEAB");
     public static final Color NODE_LINK2_COLOR = Color.decode("#009E62");
@@ -30,24 +30,12 @@ public class Settings {
     public static final Color DEFAULT_COLOR = Color.black;
 
     //Значення параметрів по замовчуванню
-/*
-    //Кількість вузлів
-    public static final int COUNT_COMMUTATION_NODES = 3;
-    //Кількість супутникових каналів
-    public static final int COUNT_SATELLITE_LINKS = 1;
-    //Середній ступінь мережі
-    public static final int DEGREE_NETWORKS = 2;
-*/
-
-
     //Кількість вузлів
     public static final int COUNT_COMMUTATION_NODES = 24;
     //Кількість супутникових каналів
     public static final int COUNT_SATELLITE_LINKS = 2;
     //Середній ступінь мережі
     public static final int DEGREE_NETWORKS = 4;
-
-
 
     //Мінімальне значення ваги каналу
     public static final int MIN_VALUE_WEIGHT_OF_RANGE = 2;
@@ -62,7 +50,7 @@ public class Settings {
 
     //---------Communication
     //час оновлення сусідів
-    public static final int UPDATE_NEIGHBOR = 2000;
+    public static final int UPDATE_NEIGHBOR = 20000;
     //скільки часу сусід буде рахуватись підключеним, після прийому від нього HELLO пакету
     public static final int NEIGHBOR_LIVE = UPDATE_NEIGHBOR*2;
     //Максимальна кількість пакетів в каналі в одиницю часу
@@ -70,7 +58,7 @@ public class Settings {
     //Після скількох пакетів відбується переключення напівдуплексу
     public static final int COUNT_CHANGE_DIRECTION_HALF_DUPLEX = 20;
     //Як часто будуть розсилатись LSA пакети при змінах
-    public static final int UPDATE_LSA = 100;
+    public static final int UPDATE_LSA = 10;
 
     //--------Генератор
     public static final double FREQUENCY= 0.1;
@@ -78,16 +66,20 @@ public class Settings {
     public static final int MESSAGE_SIZE_TO = 5000;
 
     //максимальний розмір пакету
-    public static final int DEFAULT_MAX_PACKET_SIZE = 512;
-    public static final int DEFAULT_MESSAGE_SIZE = 1024;
+    public static final int DEFAULT_MAX_PACKET_SIZE = 2048;
+    public static final int DEFAULT_MESSAGE_SIZE = 15000;
 
 
-    public static final Color PACKET_COLOR = Color.decode("#F6D779");
+    public static final Color PACKET_COLOR = Color.BLACK;
     public static final Color PACKET_COLOR_HELLO = Color.decode("#F6D779");
     public static final Color PACKET_COLOR_LSA = Color.decode("#7992F6");
     public static final Color PACKET_COLOR_ACCEPT = Color.decode("#79F683");
     public static final Color PACKET_COLOR_UDP = Color.decode("#1894FF");
     public static final Color PACKET_COLOR_TCP = Color.decode("#FF6918");
+
+    public static final Color PACKET_COLOR_TCP_ASK = Color.decode("#C1FF18");
+    public static final Color PACKET_COLOR_TCP_CLOSE = Color.decode("#FC2847");
+
 
     public static final int DELAY_MAX = 1000;
     public static final int DELAY_MIN = 10;

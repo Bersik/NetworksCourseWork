@@ -1,4 +1,4 @@
-package network.model.packet.table;
+package network;
 
 import network.Node;
 

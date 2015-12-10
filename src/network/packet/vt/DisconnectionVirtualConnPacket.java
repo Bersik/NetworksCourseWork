@@ -1,21 +1,21 @@
-package network.model.packet.tcp;
+package network.packet.vt;
 
 import network.Link;
 import network.Node;
-import network.model.packet.Packet;
-import network.model.packet.PacketPriority;
+import network.packet.Packet;
+import network.packet.PacketPriority;
 
 /**
- * Created on 20:21 06.12.2015
+ * Created on 22:42 06.12.2015
  *
  * @author Bersik
  */
 
-public class ConnectionTCPPacket extends Packet{
+public class DisconnectionVirtualConnPacket extends Packet{
     private static final int SIZE = 100;
     private int virtualConnectionID;
 
-    public ConnectionTCPPacket(Node from, Node to, Link link, int virtualConnectionID) {
+    public DisconnectionVirtualConnPacket(Node from, Node to, Link link, int virtualConnectionID) {
         super(from, to, link,SIZE,PacketPriority.HIGH);
         this.virtualConnectionID = virtualConnectionID;
 
@@ -25,5 +25,4 @@ public class ConnectionTCPPacket extends Packet{
     public int getVirtualConnectionID() {
         return virtualConnectionID;
     }
-
 }

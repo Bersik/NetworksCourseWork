@@ -6,8 +6,9 @@ import files.NetworkFileFilter;
 import network.*;
 import network.algorithm.AlgorithmType;
 import network.exception.BufferLengthException;
-import network.model.Network;
-import settings.Settings;
+import network.generator.Generator;
+import network.Network;
+import network.packet.Packet;
 import util.ErrorDialog;
 import view.form.CreateNetworkDialog2;
 import view.form.MainWindow;
@@ -16,8 +17,6 @@ import view.form.information.LinkInformation;
 import view.form.information.NodeInformation;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -156,7 +155,6 @@ public class Realization extends MainWindow {
 
         generatorCheckBox.addActionListener(new GeneratorCheckBoxActionListener());
 
-        enableComponents(typeRouting,false);
         enableComponents(messagesPanel,false);
         tabbedPane1.addChangeListener(new ChangeTablePaneListener());
 
@@ -558,7 +556,9 @@ public class Realization extends MainWindow {
         if (informationFrame != null)
             informationFrame.update();
         timeLabel.setText(Long.toString(Network.getTime()));
-
+        countInformationPacket.setText(Long.toString(Network.getCountInformationPacket()));
+        countSpecialPacket.setText(Long.toString(Network.getCountSpecialPacket()));
+        waitTimeLabel.setText(Integer.toString(Packet.calculateWaitTime()));
     }
 
     private Node findNodeByID(int id) {
@@ -637,15 +637,17 @@ public class Realization extends MainWindow {
                 pauseButton.setEnabled(true);
                 stepButton.setEnabled(true);
                 stateStart = false;
-                network.setPacketSize((Integer) packetSizeTextField1.getValue());
+                network.setPacketSize(((Number) packetSizeTextField1.getValue()).intValue());
                 if (shortestDistanceRadioButton.isSelected())
                     network.setAlgorithmType(AlgorithmType.SHORTEST_DISTANCE);
                 else
                     network.setAlgorithmType(AlgorithmType.SHOTEST_TRANSIT);
-                network.startTimer();
                 enableComponents(typeRouting,false);
                 tabbedPane1.setEnabled(false);
                 enableComponents(messagesPanel,true);
+                enableComponents(settingsPanel,false);
+                network.datagramAccept(UDPAcceptCheckBox.isSelected());
+                network.startTimer();
             } else {
                 startStopButton.setText(startStr);
                 pauseButton.setEnabled(false);
@@ -655,6 +657,9 @@ public class Realization extends MainWindow {
                 enableComponents(typeRouting,true);
                 tabbedPane1.setEnabled(true);
                 enableComponents(messagesPanel,false);
+                enableComponents(settingsPanel,true);
+
+
             }
         }
     }
@@ -1004,14 +1009,14 @@ public class Realization extends MainWindow {
     private class CreateNetworkButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            GeneratorNetwork generatorNetwork = CreateNetworkDialog2.showDialog(Realization.this);
+            Generator generatorNetwork = CreateNetworkDialog2.showDialog(Realization.this);
             if (generatorNetwork != null) {
                 clearAll();
                 links.clear();
                 links = generatorNetwork.getLinks();
                 nodes = generatorNetwork.getNodes();
                 updateNodesCheckBox();
-                network.destroy();
+                network.cleanAll();
                 network = new Network(Realization.this, nodes, links, calculateDelay());
 
                 redrawAll();
@@ -1069,8 +1074,7 @@ public class Realization extends MainWindow {
                     links = networkSerialization.links;
                     nodes = networkSerialization.nodes;
                     updateNodesCheckBox();
-                    if (network != null)
-                        network.destroy();
+                    network.cleanAll();
                     network = new Network(Realization.this, nodes, links, calculateDelay());
                     Node.reset(nodes.size());
                     redrawAll();

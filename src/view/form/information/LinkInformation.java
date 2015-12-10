@@ -2,6 +2,7 @@ package view.form.information;
 
 import network.Link;
 import view.Realization;
+import view.form.information.table.LinksTableModel;
 import view.form.information.table.PacketsInLinkTable;
 
 import javax.swing.*;
@@ -82,7 +83,8 @@ public class LinkInformation extends InformationFrame {
 
     @Override
     public void update() {
-        packetsTable.repaint();
+        packetsTable.setModel(new PacketsInLinkTable(link));
+        PacketsInLinkTable.setColumnsWidth(packetsTable);
     }
 
     private void initialize() {
@@ -93,8 +95,6 @@ public class LinkInformation extends InformationFrame {
         connectionTypeLabel.setText(link.getConnectionType().toString());
         linkTypeLabel.setText(link.getLinkType().toString());
 
-        packetsTable.setModel(new PacketsInLinkTable(link));
-        PacketsInLinkTable.setColumnsWidth(packetsTable);
-        packetsTable.setFillsViewportHeight(true);
+        update();
     }
 }

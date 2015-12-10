@@ -2,11 +2,9 @@ package view.form.information.table;
 
 import network.Node;
 import network.algorithm.Path;
-import network.model.packet.table.TopologyBase;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.JTableHeader;
 import java.util.*;
 
 /**

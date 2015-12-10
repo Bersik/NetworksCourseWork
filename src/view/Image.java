@@ -4,16 +4,17 @@ import network.ConnectionType;
 import network.Link;
 import network.LinkType;
 import network.Node;
-import network.model.packet.HelloPacket;
-import network.model.packet.LSAPacket;
-import network.model.packet.Packet;
-import network.model.packet.UDPPacket;
-import network.model.packet.accept.AcceptPacket;
-import network.model.packet.tcp.TCPPacket;
+import network.packet.HelloPacket;
+import network.packet.LSAPacket;
+import network.packet.Packet;
+import network.packet.DatagramPacket;
+import network.packet.AcceptPacket;
+import network.packet.vt.ConnectionVirtualConnPacket;
+import network.packet.vt.DisconnectionVirtualConnPacket;
+import network.packet.vt.VirtualConnPacket;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
@@ -192,10 +193,14 @@ public class Image extends JPanel {
                 graphics.setColor(PACKET_COLOR_LSA);
             else if (packet instanceof AcceptPacket)
                 graphics.setColor(PACKET_COLOR_ACCEPT);
-            else if (packet instanceof UDPPacket)
+            else if (packet instanceof DatagramPacket)
                 graphics.setColor(PACKET_COLOR_UDP);
-            else if (packet instanceof TCPPacket)
+            else if (packet instanceof VirtualConnPacket)
                 graphics.setColor(PACKET_COLOR_TCP);
+            else if (packet instanceof ConnectionVirtualConnPacket)
+                graphics.setColor(PACKET_COLOR_TCP_ASK);
+            else if (packet instanceof DisconnectionVirtualConnPacket)
+                graphics.setColor(PACKET_COLOR_TCP_CLOSE);
             graphics.fillRect(coord.x, coord.y, 40, 20);
             graphics.setColor(DEFAULT_COLOR);
             graphics.drawRect(coord.x, coord.y, 40, 20);

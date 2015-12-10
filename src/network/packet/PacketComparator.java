@@ -1,4 +1,4 @@
-package network.model.packet;
+package network.packet;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -15,9 +15,9 @@ public class PacketComparator implements Comparator<Packet>,Serializable {
         int p1 = o1.getPriority().getNum();
         int p2 = o1.getPriority().getNum();
 
-        if (p1 < p2)
-            return 1;
         if (p1 > p2)
+            return 1;
+        if (p1 < p2)
             return -1;
 
         if (o1.getId() > o2.getId())

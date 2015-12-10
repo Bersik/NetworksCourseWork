@@ -1,8 +1,8 @@
-package network.model.packet.tcp;
+package network.packet.vt;
 
 import network.Link;
 import network.Node;
-import network.model.packet.accept.AcceptPacket;
+import network.packet.AcceptPacket;
 
 /**
  * Created on 3:47 01.12.2015
@@ -10,7 +10,7 @@ import network.model.packet.accept.AcceptPacket;
  * @author Bersik
  */
 
-public class AcceptTCPPacket extends AcceptPacket {
+public class AcceptVirtualConnPacket extends AcceptPacket {
     private static final int SIZE = 100;
 
     private int virtualConnectionID;
@@ -22,7 +22,7 @@ public class AcceptTCPPacket extends AcceptPacket {
      * @param link
      * @param idOriginalPacket номер пакета, який підтверджуємо
      */
-    public AcceptTCPPacket(Node from, Node to, Link link, int idOriginalPacket, int virtualConnectionID) {
+    public AcceptVirtualConnPacket(Node from, Node to, Link link, int idOriginalPacket, int virtualConnectionID) {
         super(from, to, link,idOriginalPacket);
         this.to = link.getAnotherNode(from);
         this.virtualConnectionID = virtualConnectionID;
